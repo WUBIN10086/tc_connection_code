@@ -1,0 +1,14 @@
+# parameters optimized by POT
+
+alpha = 0.5
+
+# P_1 is throughput within 1m
+P_1 = 100.0
+
+# wall types
+Wk = 0.5 0.2 0.7 0.3 0.4 0.1
+
+# For throughput estimation
+a = 
+b =
+c =
