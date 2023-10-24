@@ -77,7 +77,9 @@ with open("coordinates.csv", newline='') as csvfile:
 
 i = int(input("Enter the target AP i (1, 2, 3, ...): "))
 j = int(input("Enter the target Host j (1, 2, 3, ...): "))
-nk = [1, 2]  # 根据需要提供 nk 的值
+#nk = [1, 2]  # 根据需要提供 nk 的值
+
+nk = [1, 2]
 
 try:
     result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)

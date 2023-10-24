@@ -30,6 +30,9 @@ def Calculate_throughput(a, b, c, Pd):
     except ValueError:
         return "Please calculate the Pd, and check the input parameters."
 
+
+#---------------------------------------------------------------------------------------
+
 def calculate_throughput_estimate(parameters, coordinates, i, j, nk):
     alpha = parameters.get('alpha', 0.0)
     P_1 = parameters.get('P_1', 0.0)
@@ -37,6 +40,7 @@ def calculate_throughput_estimate(parameters, coordinates, i, j, nk):
     b = parameters.get('b', 0.0)
     c = parameters.get('c', 0.0)
     Wk = parameters.get('Wk', [])
+    NumOfWall = nk
 
     if i >= 1 and i <= len(coordinates) and j >= 1 and j <= len(coordinates):
         i_row = coordinates[i - 1]
@@ -44,7 +48,7 @@ def calculate_throughput_estimate(parameters, coordinates, i, j, nk):
         x1, y1 = float(i_row['X']), float(i_row['Y'])
         x2, y2 = float(j_row['X']), float(j_row['Y'])
         d = Distance(x1, y1, x2, y2)
-        Pd = Rss_calculate(alpha, P_1, d, nk, Wk)
+        Pd = Rss_calculate(alpha, P_1, d, NumOfWall, Wk)
         Thr_estimation = Calculate_throughput(a, b, c, Pd)
         return Thr_estimation
     else:
