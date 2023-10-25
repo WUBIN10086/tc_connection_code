@@ -8,8 +8,9 @@
 #                 2. use function
 #                 3. connection decide algorithm
 # algorithm step:
-# 1. Determine the number of interfaces and hosts in the network
-# 2. 
+# 1. Decide AP numbers and Positions in the MAP, consider RSS cover range
+# 2. Decide Host numbers and positions, output the coordinates in CSV file
+# 3. 
 #
 #=================================================================
 
@@ -26,7 +27,13 @@ from concurrent_calc import calculate_srf
 #---------------------------------------------------------------------
 # connection solution count part
 # 需要改进，暂时版
+
+# 按照AP和Host连接方式计算的公平吞吐量的值取决于较小的那个单一吞吐量
+# 加入决策，先计算每个Host从每个AP处的预计单一吞吐量大小
+
 # input number of m and n
+# create matrix for connect condition:
+# element X_ij represent connect(1) or disconnect(0)
 n = int(input("Please input number of Host n: "))
 m = int(input("Please input number of AP m: "))
 
@@ -49,6 +56,10 @@ for connection in connection_combinations:
 n = 0
 for i, matrix in enumerate(all_matrices):
     n = n+1
+
+
+
+
 #---------------------------------------------------------------------
 
 
@@ -75,11 +86,22 @@ with open("coordinates.csv", newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     coordinates = list(reader)
 
-i = int(input("Enter the target AP i (1, 2, 3, ...): "))
-j = int(input("Enter the target Host j (1, 2, 3, ...): "))
-#nk = [1, 2]  # 根据需要提供 nk 的值
 
-nk = [1, 2]
+
+#i = int(input("Enter the target AP i (1, 2, 3, ...): "))
+#j = int(input("Enter the target Host j (1, 2, 3, ...): "))
+
+
+# nk = [1, 2]  # 根据需要提供 nk 的值
+# nk 为AP和Host之间各种墙面的影响数量
+# corridor wall for W1, 
+# the partition wall for W2, 
+# the intervening wall for W3, 
+# the glass wall for W4, 
+# the elevator wall for W5, 
+# and the door for W6.
+# Roy的程序中注释掉了墙面的影响，默认就是一堵墙
+nk = [1, 0, 0, 0, 0, 0]
 
 try:
     result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
