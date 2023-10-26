@@ -34,18 +34,20 @@ from concurrent_calc import calculate_srf
 # input number of m and n
 # create matrix for connect condition:
 # element X_ij represent connect(1) or disconnect(0)
+
 n = int(input("Please input number of Host n: "))
-m = int(input("Please input number of AP m: "))
+m = int(input("Please input number of interface m: "))
 
 host_list = list(range(n))
 ap_list = list(range(m))
 
-connection_combinations = list(itertools.permutations(ap_list, n))
-
 all_matrices = []
 
+for connection in itertools.permutations(ap_list, n):
+    # Check if all Hosts are connected to the same interface
+    if len(set(connection)) == 1:
+        continue
 
-for connection in connection_combinations:
     matrix_X = [[0 for _ in range(m)] for _ in range(n)]  # 初始化矩阵X
 
     for i, ap in enumerate(connection):
@@ -53,13 +55,15 @@ for connection in connection_combinations:
 
     all_matrices.append(matrix_X)
 
-n = 0
+n = len(all_matrices)
+
+
 for i, matrix in enumerate(all_matrices):
-    n = n+1
-
-
-
-
+    n = n + 1
+    print(f"Matrix {n}:")
+    for row in matrix:
+        print(row)
+    print()
 #---------------------------------------------------------------------
 
 
@@ -101,7 +105,7 @@ with open("coordinates.csv", newline='') as csvfile:
 # the elevator wall for W5, 
 # and the door for W6.
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
-nk = [1, 0, 0, 0, 0, 0]
+nk = [0, 0, 0, 0, 0, 0]
 
 try:
     result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
