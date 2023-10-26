@@ -1,3 +1,8 @@
+#======================================================
+# Fairness throughput calculation
+# Last modify date: 2023 10/27
+#======================================================
+
 # 获取Host数量n
 n = int(input("Enter the number of Hosts (n): "))
 
