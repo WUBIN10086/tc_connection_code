@@ -53,7 +53,7 @@ def calculate_throughput_estimate(parameters, host_coordinates, ap_coordinates, 
 
     Pd = Rss_calculate(alpha, P_1, d, NumOfWall, Wk)
     Thr_estimation = Calculate_throughput(a, b, c, Pd)
-    
+    Thr_estimation = round(Thr_estimation, 2)
     return Thr_estimation
 
 

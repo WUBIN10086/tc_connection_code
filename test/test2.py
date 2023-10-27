@@ -1,22 +1,6 @@
 import csv
 from throughput_estimation import calculate_throughput_estimate
 
-
-with open("parameters.txt", "r") as file:
-    parameters = {}
-    for line in file:
-        line = line.strip()
-        if line.startswith('#'):
-            continue
-        key_value = line.split('=')
-        if len(key_value) == 2:
-            key, value = map(str.strip, key_value)
-            if key in ['alpha', 'P_1', 'a', 'b', 'c']:
-                parameters[key] = float(value)
-            elif key == 'Wk':
-                parameters[key] = list(map(float, value.split()))
-
-
 # 创建两个空数组用于存储AP和Host的坐标
 ap_coordinates = []
 host_coordinates = []
@@ -65,12 +49,44 @@ for host in host_coordinates:
 for host_name, host_x, host_y in host_coordinates:
     for ap_name, ap_x, ap_y in ap_coordinates:
         nk = [0, 0, 0, 0, 0, 0]  # Update this with the appropriate nk values
-        try:
-            result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-            print(f"{host_name} for {ap_name}: {result}")
-        except ValueError as e:
-            print(e)
-
+        if ap_name.endswith("2"):
+            with open("parameters2.txt", "r") as file:
+                parameters = {}
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('#'):
+                        continue
+                    key_value = line.split('=')
+                    if len(key_value) == 2:
+                        key, value = map(str.strip, key_value)
+                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                            parameters[key] = float(value)
+                        elif key == 'Wk':
+                            parameters[key] = list(map(float, value.split()))
+            try:
+                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                print(f"{host_name} for {ap_name}: {result}")
+            except ValueError as e:
+                print(e)
+        else:
+            with open("parameters.txt", "r") as file:
+                parameters = {}
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('#'):
+                        continue
+                    key_value = line.split('=')
+                    if len(key_value) == 2:
+                        key, value = map(str.strip, key_value)
+                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                            parameters[key] = float(value)
+                        elif key == 'Wk':
+                            parameters[key] = list(map(float, value.split()))
+            try:
+                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                print(f"{host_name} for {ap_name}: {result}")
+            except ValueError as e:
+                print(e)
 
 
 

@@ -60,36 +60,31 @@ for i, matrix in enumerate(all_matrices):
 
 
 #---------------------------------------------------------------------
-# single throughput calc. part
-# 示例用法
-# 读取参数文件
-
-
-
-
-with open("parameters.txt", "r") as file:
-    parameters = {}
-    for line in file:
-        line = line.strip()
-        if line.startswith('#'):
-            continue
-        key_value = line.split('=')
-        if len(key_value) == 2:
-            key, value = map(str.strip, key_value)
-            if key in ['alpha', 'P_1', 'a', 'b', 'c']:
-                parameters[key] = float(value)
-            elif key == 'Wk':
-                parameters[key] = list(map(float, value.split()))
-
- # 读取坐标文件
+# 创建两个空数组用于存储AP和Host的坐标
+ap_coordinates = []
+host_coordinates = []
+# 读取CSV文件
 with open("coordinates.csv", newline='') as csvfile:
     reader = csv.DictReader(csvfile)
-    coordinates = list(reader)
+    for row in reader:
+        name = row["Name"]
+        x = float(row["X"])
+        y = float(row["Y"])
+        entity_type = row["Type"]
 
+        # 根据实体类型将坐标信息添加到相应的数组
+        if entity_type == "AP":
+            ap_coordinates.append((name, x, y))
+        elif entity_type == "Host":
+            host_coordinates.append((name, x, y))
 
-
-#interface_i = int(input("Enter the target interface i (1, 2, 3, ...): "))
-#Host_j = int(input("Enter the target Host j (1, 2, 3, ...): "))
+# 打印AP和Host的坐标数组
+print("AP Coordinates:")
+for ap in ap_coordinates:
+    print(ap)
+print("Host Coordinates:")
+for host in host_coordinates:
+    print(host)
 
 
 # nk = [1, 2]  # 根据需要提供 nk 的值
@@ -101,30 +96,62 @@ with open("coordinates.csv", newline='') as csvfile:
 # the elevator wall for W5, 
 # and the door for W6.
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
-nk = [0, 0, 0, 0, 0, 0]
 
-#try:
-    #result = calculate_throughput_estimate(parameters, coordinates, interface_i, Host_j, nk)
-    #print(f"Single Thr_estimation of Host_j is: {result}")
-#except ValueError as e:
-    #print(e)
-
-
-for i, host in enumerate(coordinates):
-    for j, ap in enumerate(coordinates):
-        try:
-            result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
-            print(f"Host_{i} for AP_{j}: {result}")
-        except ValueError as e:
-            print(e)
+# 遍历每个主机和每个接入点，计算吞吐量
+for host_name, host_x, host_y in host_coordinates:
+    for ap_name, ap_x, ap_y in ap_coordinates:
+        nk = [0, 0, 0, 0, 0, 0]  # Update this with the appropriate nk values
+        if ap_name.endswith("2"):
+            # 如果是结尾为偶数的接口代表着TP-Link T4UH
+            # 使用parameter2的数据
+            # 5Ghz频段 带宽40Mhz
+            with open("parameters2.txt", "r") as file:
+                parameters = {}
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('#'):
+                        continue
+                    key_value = line.split('=')
+                    if len(key_value) == 2:
+                        key, value = map(str.strip, key_value)
+                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                            parameters[key] = float(value)
+                        elif key == 'Wk':
+                            parameters[key] = list(map(float, value.split()))
+            try:
+                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                print(f"{host_name} for {ap_name}: {result}")
+            except ValueError as e:
+                print(e)
+        else:
+            # 其他的时候使用普通的板载参数
+            # 2.4GHz 80211n协议 40Mhz信道绑定
+            with open("parameters.txt", "r") as file:
+                parameters = {}
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('#'):
+                        continue
+                    key_value = line.split('=')
+                    if len(key_value) == 2:
+                        key, value = map(str.strip, key_value)
+                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                            parameters[key] = float(value)
+                        elif key == 'Wk':
+                            parameters[key] = list(map(float, value.split()))
+            try:
+                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                print(f"{host_name} for {ap_name}: {result}")
+            except ValueError as e:
+                print(e)
 #---------------------------------------------------------------------
 
 
 #---------------------------------------------------------------------
 # concurrent throughput calc.
 # calc signal/success rate factor
-i = int(input("Enter the target AP i (1, 2, 3, ...): "))
-j = int(input("Enter the target Host j (1, 2, 3, ...): "))
+
+
 srf = calculate_srf(m)
-thr = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
-concurrent = thr * srf
+
+concurrent_H[i]= single_thr[i] * srf
