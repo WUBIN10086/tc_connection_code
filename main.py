@@ -28,49 +28,45 @@ from concurrent_calc import calculate_srf
 # connection solution count part
 # 需要改进，暂时版
 
-# 按照AP和Host连接方式计算的公平吞吐量的值取决于较小的那个单一吞吐量
-# 加入决策，先计算每个Host从每个AP处的预计单一吞吐量大小
+# 计算了所有的连接情况
 
 # input number of m and n
 # create matrix for connect condition:
 # element X_ij represent connect(1) or disconnect(0)
 
-n = int(input("Please input number of Host n: "))
-m = int(input("Please input number of interface m: "))
-
-host_list = list(range(n))
-ap_list = list(range(m))
+n = int(input("请输入行数 n: "))
+m = int(input("请输入列数 m: "))
 
 all_matrices = []
 
-for connection in itertools.permutations(ap_list, n):
-    # Check if all Hosts are connected to the same interface
-    if len(set(connection)) == 1:
-        continue
+for combination in itertools.product([0, 1], repeat=n * m):
+    matrix = [list(combination[i:i+m]) for i in range(0, n * m, m)]
 
-    matrix_X = [[0 for _ in range(m)] for _ in range(n)]  # 初始化矩阵X
-
-    for i, ap in enumerate(connection):
-        matrix_X[i][ap] = 1
-
-    all_matrices.append(matrix_X)
-
-n = len(all_matrices)
-
+    # 筛选条件1：删除包含 1 多于一个的行
+    if all(row.count(1) <= 1 for row in matrix):
+        # 筛选条件2：检查每一列是否至少有一个 1
+        if all(any(row[j] == 1 for row in matrix) for j in range(m)):
+            # 筛选条件3：检查每一行是否至少有一个 1
+            if all(1 in row for row in matrix):
+                all_matrices.append(matrix)
 
 for i, matrix in enumerate(all_matrices):
-    n = n + 1
-    print(f"Matrix {n}:")
+    print(f"Matrix {i + 1}:")
     for row in matrix:
         print(row)
     print()
 #---------------------------------------------------------------------
 
 
+
 #---------------------------------------------------------------------
 # single throughput calc. part
 # 示例用法
 # 读取参数文件
+
+
+
+
 with open("parameters.txt", "r") as file:
     parameters = {}
     for line in file:
@@ -92,8 +88,8 @@ with open("coordinates.csv", newline='') as csvfile:
 
 
 
-#i = int(input("Enter the target AP i (1, 2, 3, ...): "))
-#j = int(input("Enter the target Host j (1, 2, 3, ...): "))
+#interface_i = int(input("Enter the target interface i (1, 2, 3, ...): "))
+#Host_j = int(input("Enter the target Host j (1, 2, 3, ...): "))
 
 
 # nk = [1, 2]  # 根据需要提供 nk 的值
@@ -107,12 +103,20 @@ with open("coordinates.csv", newline='') as csvfile:
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
 nk = [0, 0, 0, 0, 0, 0]
 
-try:
-    result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
-    print(f"Thr_estimation is: {result}")
-except ValueError as e:
-    print(e)
+#try:
+    #result = calculate_throughput_estimate(parameters, coordinates, interface_i, Host_j, nk)
+    #print(f"Single Thr_estimation of Host_j is: {result}")
+#except ValueError as e:
+    #print(e)
 
+
+for i, host in enumerate(coordinates):
+    for j, ap in enumerate(coordinates):
+        try:
+            result = calculate_throughput_estimate(parameters, coordinates, i, j, nk)
+            print(f"Host_{i} for AP_{j}: {result}")
+        except ValueError as e:
+            print(e)
 #---------------------------------------------------------------------
 
 
