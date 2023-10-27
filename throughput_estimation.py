@@ -21,8 +21,9 @@ def Rss_calculate(alpha, P_1, d, nk, Wk):
         if len(nk) != len(Wk):
             raise ValueError("nk and Wk must have the same length")
         
-        #sum_nk_Wk = sum(nk_i * Wk_i for nk_i, Wk_i in zip(nk, Wk))
-        #RSS = P_1 - 10 * alpha * math.log10(d) - sum_nk_Wk
+        # 放心注释了，没啥用基本上
+        # sum_nk_Wk = sum(nk_i * Wk_i for nk_i, Wk_i in zip(nk, Wk))
+        # RSS = P_1 - 10 * alpha * math.log10(d) - sum_nk_Wk
         RSS = P_1 - 10 * alpha * math.log10(d)
         return RSS
     except ValueError:

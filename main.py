@@ -10,8 +10,8 @@
 # algorithm step:
 # 1. Decide AP numbers and Positions in the MAP, consider RSS cover range
 # 2. Decide Host numbers and positions, output the coordinates in CSV file
-# 3. 
-#
+# 3. Give top 3 connection plans by ML model
+# 4. 
 #=================================================================
 
 
@@ -78,14 +78,18 @@ with open("coordinates.csv", newline='') as csvfile:
         elif entity_type == "Host":
             host_coordinates.append((name, x, y))
 
+print("======================")
+print("Deivces Location")
+print("----------------------")
 # 打印AP和Host的坐标数组
 print("AP Coordinates:")
 for ap in ap_coordinates:
     print(ap)
+print("----------------------")
 print("Host Coordinates:")
 for host in host_coordinates:
     print(host)
-
+print("======================")
 
 # nk = [1, 2]  # 根据需要提供 nk 的值
 # nk 为AP和Host之间各种墙面的影响数量
@@ -96,7 +100,9 @@ for host in host_coordinates:
 # the elevator wall for W5, 
 # and the door for W6.
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
-
+print("Single Throughput")
+print("----------------------")
+results = {}
 # 遍历每个主机和每个接入点，计算吞吐量
 for host_name, host_x, host_y in host_coordinates:
     for ap_name, ap_x, ap_y in ap_coordinates:
@@ -121,6 +127,11 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
+                # 创建二维索引，把结果存入数组，并设置索引为对应的Host和AP
+                if host_name not in results:
+                    results[host_name] = {}
+                results[host_name][ap_name] = result
+
             except ValueError as e:
                 print(e)
         else:
@@ -142,9 +153,23 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
+
+                if host_name not in results:
+                    results[host_name] = {}
+                results[host_name][ap_name] = result
+
             except ValueError as e:
                 print(e)
+print("======================")
+print(results)
 #---------------------------------------------------------------------
+
+
+
+#---------------------------------------------------------------------
+# 决定连接方案从而决定同时连接的数量m
+
+
 
 
 #---------------------------------------------------------------------

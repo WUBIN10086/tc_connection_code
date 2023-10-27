@@ -1,5 +1,5 @@
 # parameters optimized by POT
-
+# parameters for 2.4Ghz interfaces 1
 alpha = 2.2
 
 # P_1 is throughput within 1m

@@ -1,5 +1,5 @@
 # parameters optimized by POT
-
+# parameters for 5Ghz interfaces 2
 alpha = 2.15
 
 # P_1 is throughput within 1m
