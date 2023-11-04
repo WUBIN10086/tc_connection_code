@@ -55,9 +55,8 @@ sys.stdout = output_file
 
 # 获取当前日期和时间
 current_datetime = datetime.datetime.now()
-
-# 打印当前日期和时间
-print("Current Date and Time:", current_datetime)
+formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M")
+print("Date and Time:", formatted_datetime)
 
 
 
@@ -299,8 +298,8 @@ best_connections.sort(key=lambda x: x[1], reverse=True)  # 根据总和降序排
 middle_index = len(best_connections) // 2  # 中间索引
 worst_index = -1  # 最差连接索引
 
-print()
 print("======================")
+print()
 print("Top 3 Best Connections:")
 
 # 输出最佳的三个连接方式

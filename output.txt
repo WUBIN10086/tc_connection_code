@@ -1,4 +1,4 @@
-Current Date and Time: 2023-11-04 18:06:18.630484
+Date and Time: 2023-11-04 18:09
 ======================
 Devices number
 ----------------------
@@ -93,8 +93,8 @@ Connection 5 Results:
 Connection 6 Results:
 [[26.53, 0], [26.53, 0], [0, 45.72]]
 
-
 ======================
+
 Top 3 Best Connections:
 Rank 1: Connection[4], Total Sum: 177.29
 Connection Details:
