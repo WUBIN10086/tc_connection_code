@@ -1,0 +1,138 @@
+Current Date and Time: 2023-11-04 18:06:18.630484
+======================
+Devices number
+----------------------
+Number of Hosts: 3
+Number of APs: 2
+======================
+Deivces Location
+----------------------
+AP Coordinates:
+('AP1', 13.0, 13.0)
+('AP2', 13.0, 13.0)
+----------------------
+Host Coordinates:
+('H1', 11.0, 15.0)
+('H2', 15.4, 15.0)
+('H3', 10.0, 10.5)
+======================
+Single Throughput
+----------------------
+H1 for AP1: 59.95
+H1 for AP2: 130.55
+H2 for AP1: 59.45
+H2 for AP2: 129.87
+H3 for AP1: 58.08
+H3 for AP2: 127.97
+======================
+Connection assignments
+----------------------
+Connection 1:
+[0, 1]
+[0, 1]
+[1, 0]
+Connection 2:
+[0, 1]
+[1, 0]
+[0, 1]
+Connection 3:
+[0, 1]
+[1, 0]
+[1, 0]
+Connection 4:
+[1, 0]
+[0, 1]
+[0, 1]
+Connection 5:
+[1, 0]
+[0, 1]
+[1, 0]
+Connection 6:
+[1, 0]
+[1, 0]
+[0, 1]
+======================
+Concurret throughput
+----------------------
+Connection 1 Results:
+[[0, 58.02], [0, 57.72], [58.08, 0]]
+
+Connection 2 Results:
+[[0, 58.02], [59.45, 0], [0, 56.88]]
+
+Connection 3 Results:
+[[0, 130.55], [26.42, 0], [25.81, 0]]
+
+Connection 4 Results:
+[[59.95, 0], [0, 57.72], [0, 56.88]]
+
+Connection 5 Results:
+[[26.64, 0], [0, 129.87], [25.81, 0]]
+
+Connection 6 Results:
+[[26.64, 0], [26.42, 0], [0, 127.97]]
+
+======================
+Fairness connection results
+----------------------
+Connection 1 Results:
+[[0, 57.98], [0, 57.98], [58.08, 0]]
+
+Connection 2 Results:
+[[0, 58.49], [59.45, 0], [0, 58.49]]
+
+Connection 3 Results:
+[[0, 45.3], [26.11, 0], [26.11, 0]]
+
+Connection 4 Results:
+[[59.95, 0], [0, 58.67], [0, 58.67]]
+
+Connection 5 Results:
+[[26.22, 0], [0, 45.4], [26.22, 0]]
+
+Connection 6 Results:
+[[26.53, 0], [26.53, 0], [0, 45.72]]
+
+
+======================
+Top 3 Best Connections:
+Rank 1: Connection[4], Total Sum: 177.29
+Connection Details:
+Connection 4:
+[1, 0]
+[0, 1]
+[0, 1]
+
+Rank 2: Connection[2], Total Sum: 176.43
+Connection Details:
+Connection 2:
+[0, 1]
+[1, 0]
+[0, 1]
+
+Rank 3: Connection[1], Total Sum: 174.04
+Connection Details:
+Connection 1:
+[0, 1]
+[0, 1]
+[1, 0]
+
+======================
+Middle Connection:
+Rank 4: Connection[6], Total Sum: 98.78
+Connection Details:
+Connection 6:
+[1, 0]
+[1, 0]
+[0, 1]
+======================
+Worst Connection:
+Rank 6: Connection[3], Total Sum: 97.52
+Connection Details:
+Connection 3:
+[0, 1]
+[1, 0]
+[1, 0]
+======================
+Code executed in 0.00 seconds
+======================

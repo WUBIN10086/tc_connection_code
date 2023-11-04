@@ -18,9 +18,11 @@
 #---------------------------------------------------------------------
 # connection algorithm
 import csv
+import sys
 import itertools
 import copy
-import numpy as np
+import datetime
+import time
 from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
 from fairness_calc import Fairness_calc
@@ -44,6 +46,20 @@ from fairness_calc import Fairness_calc
 # input number of m and n
 # create matrix for connect condition:
 # element X_ij represent connect(1) or disconnect(0)
+
+# 记录开始时间
+start_time = time.time()
+# 输出结果到文本文件
+output_file = open("output.txt", "w")
+sys.stdout = output_file
+
+# 获取当前日期和时间
+current_datetime = datetime.datetime.now()
+
+# 打印当前日期和时间
+print("Current Date and Time:", current_datetime)
+
+
 
 # 从 CSV 文件中读取 Host 和 AP 的数量
 with open("coordinates.csv", newline='') as csvfile:
@@ -251,38 +267,80 @@ for matrix in all_matrices:
                 fair_S.append(results[i][j])
                 fair_C.append(all_con_results[connect_index][i][j])
         target = Fairness_calc(n,fair_S,fair_C)
-        print(target)
+        # print(target)
         # 用计算完的Fairness target更新预估结果
         for i in range(host_n):
             if matrix[i][j] == 1:
                 fair_results [i][j] = target
-    print(fair_results)
+    # print(fair_results)
     all_fair_results.append(fair_results)
     connect_index += 1
 
 print("======================")
+print("Fairness connection results")
+print("----------------------")
 for i, fair_results in enumerate(all_fair_results):
     print(f"Connection {i + 1} Results:")
     print(all_fair_results[i])
     print()
-
 #---------------------------------------------------------------------
-max_sum = 0  # 用于跟踪最大的和
-max_index = -1  # 用于跟踪最大和的索引
+# 排序寻找最佳的连接方式
+best_connections = []
 
 for i, fair_results in enumerate(all_fair_results):
     total = 0
     for sub_list in fair_results:
         total += sum(sub_list)
 
-    print(f"Sum of connection[{i+1}]: {total:.2f}")
+    best_connections.append((i, total))
 
-    if total > max_sum:
-        max_sum = total
-        max_index = i
+best_connections.sort(key=lambda x: x[1], reverse=True)  # 根据总和降序排序
+
+middle_index = len(best_connections) // 2  # 中间索引
+worst_index = -1  # 最差连接索引
+
+print()
 print("======================")
-print(f"Best connection is connection[{max_index+1}]: {max_sum:.2f}")
-print(f"Connection {max_index + 1}:")
-for row in all_matrices[max_index]:
-    print(row)
+print("Top 3 Best Connections:")
+
+# 输出最佳的三个连接方式
+for i, (index, total) in enumerate(best_connections[:3]):
+    print(f"Rank {i + 1}: Connection[{index+1}], Total Sum: {total:.2f}")
+    print("Connection Details:")
+    print(f"Connection {index + 1}:")
+    for row in all_matrices[index]:
+        print(row)
+    print()
 print("======================")
+if middle_index >= 0:
+    print("Middle Connection:")
+    mid_index, mid_total = best_connections[middle_index]
+    print(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Sum: {mid_total:.2f}")
+    print("Connection Details:")
+    print(f"Connection {mid_index + 1}:")
+    for row in all_matrices[mid_index]:
+        print(row)
+    print("======================")
+
+if worst_index == -1:
+    worst_index, worst_total = best_connections[-1]
+    print("Worst Connection:")
+    print(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Sum: {worst_total:.2f}")
+    print("Connection Details:")
+    print(f"Connection {worst_index + 1}:")
+    for row in all_matrices[worst_index]:
+        print(row)
+    print("======================")
+
+#---------------------------------------------------------------------
+# 输出代码运行时间
+# 记录结束时间
+end_time = time.time()
+# 计算代码执行时间
+execution_time = end_time - start_time
+print(f"Code executed in {execution_time:.2f} seconds")
+print("======================")
+
+#---------------------------------------------------------------------
+output_file.close()
+sys.stdout = sys.__stdout__
