@@ -46,10 +46,24 @@ for host in host_coordinates:
 # 遍历每个主机和每个接入点，计算吞吐量
 
 # Calculate throughput for each host and AP combination
-for host_name, host_x, host_y in host_coordinates:
-    for ap_name, ap_x, ap_y in ap_coordinates:
+print("Single Throughput")
+print("----------------------")
+results = []
+
+# 初始化结果数组，填充为0
+num_hosts = len(host_coordinates)
+num_aps = len(ap_coordinates)
+results = [[0.0] * num_aps for _ in range(num_hosts)]
+
+# 遍历每个主机和每个接入点，计算吞吐量
+for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
+    for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
         nk = [0, 0, 0, 0, 0, 0]  # Update this with the appropriate nk values
+
         if ap_name.endswith("2"):
+            # 如果是结尾为偶数的接口代表着TP-Link T4UH
+            # 使用parameter2的数据
+            # 5Ghz频段 带宽40Mhz
             with open("parameters2.txt", "r") as file:
                 parameters = {}
                 for line in file:
@@ -66,9 +80,13 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
+                results[i][j] = result
+
             except ValueError as e:
                 print(e)
         else:
+            # 其他的时候使用普通的板载参数
+            # 2.4GHz 80211n协议 40Mhz信道绑定
             with open("parameters.txt", "r") as file:
                 parameters = {}
                 for line in file:
@@ -85,8 +103,10 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
+                results[i][j] = result
+
             except ValueError as e:
                 print(e)
 
-
-
+# 打印结果数组
+print("======================")

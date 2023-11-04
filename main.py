@@ -19,10 +19,21 @@
 # connection algorithm
 import csv
 import itertools
+import copy
+import numpy as np
 from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
+from fairness_calc import Fairness_calc
 #---------------------------------------------------------------------
 
+# 变量说明：
+# all_matrices: 所有的连接情况
+# matrix: 单个连接情况
+# host_n: 主机数量
+# AP_m: AP的数量
+# results: 单一吞吐量计算结果
+# con_results: 并发吞吐量计算结果
+# all_con_results: 所有情况下的并发吞吐量计算结果
 
 #---------------------------------------------------------------------
 # connection solution count part
@@ -34,27 +45,38 @@ from concurrent_calc import calculate_srf
 # create matrix for connect condition:
 # element X_ij represent connect(1) or disconnect(0)
 
-n = int(input("请输入行数 n: "))
-m = int(input("请输入列数 m: "))
+# 从 CSV 文件中读取 Host 和 AP 的数量
+with open("coordinates.csv", newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    host_n = 0
+    AP_m = 0
+    for row in reader:
+        if row["Type"] == "Host":
+            host_n += 1
+        elif row["Type"] == "AP":
+            AP_m += 1
 
+# 输出 Host 和 AP 的数量
+print("======================")
+print("Devices number")
+print("----------------------")
+print(f"Number of Hosts: {host_n}")
+print(f"Number of APs: {AP_m}")
+
+# 存储所有的连接方式
 all_matrices = []
 
-for combination in itertools.product([0, 1], repeat=n * m):
-    matrix = [list(combination[i:i+m]) for i in range(0, n * m, m)]
+for combination in itertools.product([0, 1], repeat=host_n * AP_m):
+    matrix = [list(combination[i:i+AP_m]) for i in range(0, host_n * AP_m, AP_m)]
 
     # 筛选条件1：删除包含 1 多于一个的行
     if all(row.count(1) <= 1 for row in matrix):
         # 筛选条件2：检查每一列是否至少有一个 1
-        if all(any(row[j] == 1 for row in matrix) for j in range(m)):
+        if all(any(row[j] == 1 for row in matrix) for j in range(AP_m)):
             # 筛选条件3：检查每一行是否至少有一个 1
             if all(1 in row for row in matrix):
                 all_matrices.append(matrix)
 
-for i, matrix in enumerate(all_matrices):
-    print(f"Matrix {i + 1}:")
-    for row in matrix:
-        print(row)
-    print()
 #---------------------------------------------------------------------
 
 
@@ -102,11 +124,18 @@ print("======================")
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
 print("Single Throughput")
 print("----------------------")
-results = {}
+results = []
+
+# 初始化结果数组，填充为0
+num_hosts = len(host_coordinates)
+num_aps = len(ap_coordinates)
+results = [[0.0] * num_aps for _ in range(num_hosts)]
+
 # 遍历每个主机和每个接入点，计算吞吐量
-for host_name, host_x, host_y in host_coordinates:
-    for ap_name, ap_x, ap_y in ap_coordinates:
+for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
+    for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
         nk = [0, 0, 0, 0, 0, 0]  # Update this with the appropriate nk values
+
         if ap_name.endswith("2"):
             # 如果是结尾为偶数的接口代表着TP-Link T4UH
             # 使用parameter2的数据
@@ -127,10 +156,7 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
-                # 创建二维索引，把结果存入数组，并设置索引为对应的Host和AP
-                if host_name not in results:
-                    results[host_name] = {}
-                results[host_name][ap_name] = result
+                results[i][j] = result
 
             except ValueError as e:
                 print(e)
@@ -153,30 +179,110 @@ for host_name, host_x, host_y in host_coordinates:
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
                 print(f"{host_name} for {ap_name}: {result}")
-
-                if host_name not in results:
-                    results[host_name] = {}
-                results[host_name][ap_name] = result
+                results[i][j] = result
 
             except ValueError as e:
                 print(e)
-print("======================")
-print(results)
 #---------------------------------------------------------------------
-
 
 
 #---------------------------------------------------------------------
 # 决定连接方案从而决定同时连接的数量m
-
-
-
-
-#---------------------------------------------------------------------
 # concurrent throughput calc.
 # calc signal/success rate factor
+print("======================")
+print("Connection assignments")
+print("----------------------")
+for i, matrix in enumerate(all_matrices):
+    print(f"Connection {i + 1}:")
+    for row in matrix:
+        print(row)
 
+# print(results)
+print("======================")
+print("Concurret throughput")
+print("----------------------")
+all_con_results = []
+# 遍历所有的链接情况
+# 更新results
+for matrix in all_matrices:
+    con_results = copy.deepcopy(results)
+    # 对于一种连接方式的每一列
+    # 代表着遍历每个AP连接的Host数量
+    for j in range(AP_m):
+        Host_index = [] # 同时连接的Host的序号
+        con_num = 0
+        for i in range(host_n):
+            if matrix[i][j] == 1:
+                con_num = con_num + 1
+                Host_index.append(i)
+            elif matrix[i][j] == 0:
+                con_results[i][j] = 0
+        # print("同时连接数量: ", con_num)
+        srf = calculate_srf(con_num)
+        if con_num == 1:
+            continue
+        else:
+            for i in Host_index:
+                concurrent = con_results[i][j]
+                con_results[i][j] = round(concurrent * srf, 2)
+                # print("并发通信吞吐量: " , results[i][j])
+    all_con_results.append(con_results)
 
-srf = calculate_srf(m)
+for i, con_results in enumerate(all_con_results):
+    print(f"Connection {i + 1} Results:")
+    print(all_con_results[i])
+    print()
+#---------------------------------------------------------------------
 
-concurrent_H[i]= single_thr[i] * srf
+#---------------------------------------------------------------------
+# 计算Fairness
+connect_index = 0
+all_fair_results = []
+for matrix in all_matrices:
+    fair_results = [[0] * AP_m for _ in range(host_n)]
+    n = 0
+    fair_S = []
+    fair_C = []
+    for j in range(AP_m):
+        for i in range(host_n):
+            if matrix[i][j] == 1:
+                n += 1
+                fair_S.append(results[i][j])
+                fair_C.append(all_con_results[connect_index][i][j])
+        target = Fairness_calc(n,fair_S,fair_C)
+        print(target)
+        # 用计算完的Fairness target更新预估结果
+        for i in range(host_n):
+            if matrix[i][j] == 1:
+                fair_results [i][j] = target
+    print(fair_results)
+    all_fair_results.append(fair_results)
+    connect_index += 1
+
+print("======================")
+for i, fair_results in enumerate(all_fair_results):
+    print(f"Connection {i + 1} Results:")
+    print(all_fair_results[i])
+    print()
+
+#---------------------------------------------------------------------
+max_sum = 0  # 用于跟踪最大的和
+max_index = -1  # 用于跟踪最大和的索引
+
+for i, fair_results in enumerate(all_fair_results):
+    total = 0
+    for sub_list in fair_results:
+        total += sum(sub_list)
+
+    print(f"Sum of connection[{i+1}]: {total:.2f}")
+
+    if total > max_sum:
+        max_sum = total
+        max_index = i
+print("======================")
+print(f"Best connection is connection[{max_index+1}]: {max_sum:.2f}")
+print(f"Connection {max_index + 1}:")
+for row in all_matrices[max_index]:
+    print(row)
+print("======================")
