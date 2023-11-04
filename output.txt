@@ -1,4 +1,4 @@
-Date and Time: 2023-11-04 18:09
+Date and Time: 2023-11-05 00:33
 ======================
 Devices number
 ----------------------
@@ -76,41 +76,55 @@ Connection 6 Results:
 Fairness connection results
 ----------------------
 Connection 1 Results:
-[[0, 57.98], [0, 57.98], [58.08, 0]]
+[[0, 57.87], [0, 57.87], [58.08, 0]]
 
 Connection 2 Results:
-[[0, 58.49], [59.45, 0], [0, 58.49]]
+[[0, 57.44], [59.45, 0], [0, 57.44]]
 
 Connection 3 Results:
-[[0, 45.3], [26.11, 0], [26.11, 0]]
+[[0, 130.55], [26.11, 0], [26.11, 0]]
 
 Connection 4 Results:
-[[59.95, 0], [0, 58.67], [0, 58.67]]
+[[59.95, 0], [0, 57.3], [0, 57.3]]
 
 Connection 5 Results:
-[[26.22, 0], [0, 45.4], [26.22, 0]]
+[[26.22, 0], [0, 129.87], [26.22, 0]]
 
 Connection 6 Results:
-[[26.53, 0], [26.53, 0], [0, 45.72]]
+[[26.53, 0], [26.53, 0], [0, 127.97]]
 
+Connection 1 fairness index:
+0.999997
+Connection 2 fairness index:
+0.999734
+Connection 3 fairness index:
+0.604938
+Connection 4 fairness index:
+0.999539
+Connection 5 fairness index:
+0.60736
+Connection 6 fairness index:
+0.614257
+
+Judgement weigth: 0.20, 0.80
 ======================
 
 Top 3 Best Connections:
-Rank 1: Connection[4], Total Sum: 177.29
+Rank 1: Connection[4], Total Score: 159.63, Fairness Index: 0.999539, Total Throughput: 174.55
 Connection Details:
 Connection 4:
 [1, 0]
 [0, 1]
 [0, 1]
 
-Rank 2: Connection[2], Total Sum: 176.43
+Rank 2: Connection[2], Total Score: 159.46, Fairness Index: 0.999734, Total Throughput: 174.33
 Connection Details:
 Connection 2:
 [0, 1]
 [1, 0]
 [0, 1]
 
-Rank 3: Connection[1], Total Sum: 174.04
+Rank 3: Connection[1], Total Score: 159.06, Fairness Index: 0.999997, Total Throughput: 173.82
 Connection Details:
 Connection 1:
 [0, 1]
@@ -119,20 +133,20 @@ Connection 1:
 
 ======================
 Middle Connection:
-Rank 4: Connection[6], Total Sum: 98.78
-Connection Details:
-Connection 6:
-[1, 0]
-[1, 0]
-[0, 1]
-======================
-Worst Connection:
-Rank 6: Connection[3], Total Sum: 97.52
+Rank 4: Connection[3], Total Score: 158.31, Fairness Index: 0.604938, Total Throughput: 182.77
 Connection Details:
 Connection 3:
 [0, 1]
 [1, 0]
 [1, 0]
+======================
+Worst Connection:
+Rank 6: Connection[6], Total Score: 157.11, Fairness Index: 0.614257, Total Throughput: 181.03
+Connection Details:
+Connection 6:
+[1, 0]
+[1, 0]
+[0, 1]
 ======================
 Code executed in 0.00 seconds
 ======================

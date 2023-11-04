@@ -26,6 +26,8 @@ import time
 from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
 from fairness_calc import Fairness_calc
+from fairness_index import calculate_fairness_index
+
 #---------------------------------------------------------------------
 
 # 变量说明：
@@ -256,10 +258,10 @@ connect_index = 0
 all_fair_results = []
 for matrix in all_matrices:
     fair_results = [[0] * AP_m for _ in range(host_n)]
-    n = 0
-    fair_S = []
-    fair_C = []
     for j in range(AP_m):
+        fair_S = []
+        fair_C = []
+        n = 0
         for i in range(host_n):
             if matrix[i][j] == 1:
                 n += 1
@@ -282,18 +284,85 @@ for i, fair_results in enumerate(all_fair_results):
     print(f"Connection {i + 1} Results:")
     print(all_fair_results[i])
     print()
+
+#---------------------------------------------------------------------
+
+
+
+#---------------------------------------------------------------------
+# 计算fairness index
+all_fairness_index =[]
+for i, fair_results in enumerate(all_fair_results):
+    print(f"Connection {i + 1} fairness index:")
+    calc_value = all_fair_results[i]
+    fairness_index = calculate_fairness_index(calc_value)
+    fairness_index = round(fairness_index, 6)
+    print(fairness_index)
+    all_fairness_index.append(fairness_index)
+#---------------------------------------------------------------------
+
+
+
 #---------------------------------------------------------------------
 # 排序寻找最佳的连接方式
 best_connections = []
 
+# 根据结果确定权重
+W_1 = 0
+W_2 = 0
+
+# 判断总吞吐量的离散程度
+all_totals =[]
+for i, fair_results in enumerate(all_fair_results):
+    total = 0
+    for sub_list in fair_results:
+        total += sum(sub_list)
+    all_totals.append(total)
+
+def categorize_throughput(data, threshold=20):
+    # 计算均值
+    mean_throughput = sum(data) / len(data)
+
+    cont = 0
+    
+    # 遍历吞吐量数据
+    for value in data:
+        # 计算吞吐量与均值的差值
+        difference = abs(value - mean_throughput)
+
+        # 根据阈值判断类别
+        if difference <= threshold:
+            cont += 1
+        else:
+            cont -= 1
+    if cont >= host_n/2:
+        return True
+
+throughput_data = all_totals
+
+# 指定阈值
+impact_threshold = 20
+
+if categorize_throughput(throughput_data, impact_threshold):
+    W_2 = 0.8
+else:
+    W_2 = 0.9
+
+W_1 = 1 - W_2
+print()
+print("Judgement weigth: {:.2f}, {:.2f}".format(W_1, W_2))
 for i, fair_results in enumerate(all_fair_results):
     total = 0
     for sub_list in fair_results:
         total += sum(sub_list)
 
-    best_connections.append((i, total))
+    fair_index = all_fairness_index[i]
 
-best_connections.sort(key=lambda x: x[1], reverse=True)  # 根据总和降序排序
+    # 计算综合得分
+    score = W_1 * 100 * fair_index + W_2 * total
+    best_connections.append((i, score, fair_index, total))
+
+best_connections.sort(key=lambda x: x[1], reverse=True)  # 根据得分降序排序
 
 middle_index = len(best_connections) // 2  # 中间索引
 worst_index = -1  # 最差连接索引
@@ -303,8 +372,8 @@ print()
 print("Top 3 Best Connections:")
 
 # 输出最佳的三个连接方式
-for i, (index, total) in enumerate(best_connections[:3]):
-    print(f"Rank {i + 1}: Connection[{index+1}], Total Sum: {total:.2f}")
+for i, (index, score, fairness_index, total) in enumerate(best_connections[:3]):
+    print(f"Rank {i + 1}: Connection[{index+1}], Total Score: {score:.2f}, Fairness Index: {fairness_index:.6f}, Total Throughput: {total:.2f}")
     print("Connection Details:")
     print(f"Connection {index + 1}:")
     for row in all_matrices[index]:
@@ -313,8 +382,8 @@ for i, (index, total) in enumerate(best_connections[:3]):
 print("======================")
 if middle_index >= 0:
     print("Middle Connection:")
-    mid_index, mid_total = best_connections[middle_index]
-    print(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Sum: {mid_total:.2f}")
+    mid_index, mid_score, mid_fairness, mid_total = best_connections[middle_index]
+    print(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Score: {mid_score:.2f}, Fairness Index: {mid_fairness:.6f}, Total Throughput: {mid_total:.2f}")
     print("Connection Details:")
     print(f"Connection {mid_index + 1}:")
     for row in all_matrices[mid_index]:
@@ -322,9 +391,9 @@ if middle_index >= 0:
     print("======================")
 
 if worst_index == -1:
-    worst_index, worst_total = best_connections[-1]
+    worst_index, worst_score, worst_fairness, worst_total = best_connections[-1]
     print("Worst Connection:")
-    print(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Sum: {worst_total:.2f}")
+    print(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Score: {worst_score:.2f}, Fairness Index: {worst_fairness:.6f}, Total Throughput: {worst_total:.2f}")
     print("Connection Details:")
     print(f"Connection {worst_index + 1}:")
     for row in all_matrices[worst_index]:

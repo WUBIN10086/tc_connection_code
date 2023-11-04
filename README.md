@@ -4,11 +4,17 @@ This code is for Dual interfaces.
 
 Throughput control code is written by Shell, here this code is for calc. best connection assign
 
+## To Do
+
+改进位置图，设计网页前端完成AP和Host的坐标
+
+加入墙面的影响
+
+
 ## Code List
 
-+ throughput estimation model 
++ throughput estimation model
 + throughput reduce model -> concurrent_calc.py
-
 + Host and AP position -> coordinates.csv
 + Throughput estimation model parameters -> parameters.txt
 + connection decision code -> main.py
