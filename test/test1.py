@@ -1,7 +1,7 @@
 import itertools
 
-n = int(input("请输入行数 n: "))
-m = int(input("请输入列数 m: "))
+n = int(input("请输入Host数量 n: "))
+m = int(input("请输入Interface数量 m: "))
 
 all_matrices = []
 
