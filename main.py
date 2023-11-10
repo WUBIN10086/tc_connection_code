@@ -1,6 +1,6 @@
 #================================================================
 # Connection decision model calculation
-# Last modify date: 2023 10/20
+# Last modify date: 2023 11/10
 #================================================================
 # Change: make main code
 #         example for 80211n protocol TP-Link T4UH ver.2
@@ -10,8 +10,10 @@
 # algorithm step:
 # 1. Decide AP numbers and Positions in the MAP, consider RSS cover range
 # 2. Decide Host numbers and positions, output the coordinates in CSV file
-# 3. Give top 3 connection plans by ML model
-# 4. 
+# 3. Give top 3 connection plans by ML model（Test）
+# 4. Calculate Single and concurrent for every connection
+# 5. Decide weight for sort princple
+# 6. Sort
 #=================================================================
 
 
