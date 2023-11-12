@@ -9,6 +9,6 @@ P_1 = -28.9
 Wk = 7.21 6.9 3.4 4.7 2.11 2.5
 
 # For throughput estimation
-a = 61.5
+a = 59.5
 b = 62
 c = 6.78
