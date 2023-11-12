@@ -2,5 +2,6 @@ Name,X,Y,Type
 AP1,13,13,AP
 AP2,13,13,AP
 H1,11,15,Host
-H2,15.4,15,Host
+H2,15.4,15.2,Host
 H3,10,10.5,Host
+H4,10,15.2,Host

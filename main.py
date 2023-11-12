@@ -41,6 +41,9 @@ from fairness_index import calculate_fairness_index
 # results: 单一吞吐量计算结果
 # con_results: 并发吞吐量计算结果
 # all_con_results: 所有情况下的并发吞吐量计算结果
+# all_fairness_index：所有连接情况的吞吐量公平性指数
+# all_fair_results: 所有情况下的计算的公平吞吐量大小
+# all_totals：所有连接方式下的总吞吐量大小
 
 #---------------------------------------------------------------------
 # connection solution count part
@@ -256,7 +259,7 @@ for i, con_results in enumerate(all_con_results):
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
-# 计算Fairness
+# 计算Fairness target throughput
 connect_index = 0
 all_fair_results = []
 for matrix in all_matrices:
@@ -294,7 +297,10 @@ for i, fair_results in enumerate(all_fair_results):
 
 #---------------------------------------------------------------------
 # 计算fairness index
+
+# 初始化记录公平性指数的列表
 all_fairness_index =[]
+
 for i, fair_results in enumerate(all_fair_results):
     print(f"Connection {i + 1} fairness index:")
     calc_value = all_fair_results[i]
@@ -308,13 +314,22 @@ for i, fair_results in enumerate(all_fair_results):
 
 #---------------------------------------------------------------------
 # 排序寻找最佳的连接方式
+# 因为fairness index和总吞吐量之间的单位相差过大，
+# 因此使用归一化方法，将总吞吐量转化为和fairness index一样的单位范围，
+# 然后通过设计权重去判断合适的最佳组合。
+
 best_connections = []
 
-# 根据结果确定权重
+# 根据结果确定权重，初始化权重
 W_1 = 0
 W_2 = 0
 
 # 判断总吞吐量的离散程度
+# 由于吞吐量在实际测量中存在上下波动，
+# 如果总吞吐量相差只有1或者2的话实际上不同的连接方式最后测量的结果相差不大
+# 若吞吐量相差不大的话则优先考虑公平性指数，如果总吞吐量相差过大则优先考虑吞吐量大小
+
+# 计算每种连接方式下的总吞吐量大小
 all_totals =[]
 for i, fair_results in enumerate(all_fair_results):
     total = 0
@@ -322,50 +337,68 @@ for i, fair_results in enumerate(all_fair_results):
         total += sum(sub_list)
     all_totals.append(total)
 
-def categorize_throughput(data, threshold=20):
+# 指定阈值
+impact_threshold = 10
+# 计算所有连接方式的数量
+connection_num = len(all_matrices)
+
+def categorize_throughput(data, threshold):
     # 计算均值
     mean_throughput = sum(data) / len(data)
-
     cont = 0
-    
     # 遍历吞吐量数据
     for value in data:
         # 计算吞吐量与均值的差值
         difference = abs(value - mean_throughput)
-
         # 根据阈值判断类别
         if difference <= threshold:
             cont += 1
         else:
             cont -= 1
-    if cont >= host_n/2:
+    # 如果大部分（1/2）的连接情况下，吞吐量相差不大，则优先考虑公平性指数
+    if cont >= connection_num / 2:
         return True
 
+# 调用均值计算函数
 throughput_data = all_totals
-
-# 指定阈值
-impact_threshold = 20
-
 if categorize_throughput(throughput_data, impact_threshold):
-    W_2 = 0.8
+    W_2 = 0.3
 else:
-    W_2 = 0.9
+    W_2 = 0.7
 
 W_1 = 1 - W_2
+
 print()
-print("Judgement weigth: {:.2f}, {:.2f}".format(W_1, W_2))
+print("Judgement weigth: Fairness index: {:.2f}, Total throughput: {:.2f}".format(W_1, W_2))
+
+# 归一化函数
+def normalize(data):
+    """
+    对数据进行归一化处理，使其范围在0到1之间。
+    :param data: 一个数字列表。
+    :return: 归一化后的数据列表。
+    """
+    min_val = min(data)
+    max_val = max(data)
+    return [(x - min_val) / (max_val - min_val) for x in data]
+
+# 归一化总吞吐量
+normalized_totals = normalize(all_totals)
+
 for i, fair_results in enumerate(all_fair_results):
     total = 0
     for sub_list in fair_results:
         total += sum(sub_list)
-
+    
+    # 使用归一化的总吞吐量
+    normalized_total = normalized_totals[i]
     fair_index = all_fairness_index[i]
-
-    # 计算综合得分
-    score = W_1 * 100 * fair_index + W_2 * total
+    # 计算综合得分，使用归一化的总吞吐量
+    score = ( W_1 * fair_index + W_2 * normalized_total) * 100
     best_connections.append((i, score, fair_index, total))
 
-best_connections.sort(key=lambda x: x[1], reverse=True)  # 根据得分降序排序
+# 根据得分降序排序
+best_connections.sort(key=lambda x: x[1], reverse=True)  
 
 middle_index = len(best_connections) // 2  # 中间索引
 worst_index = -1  # 最差连接索引
@@ -383,6 +416,7 @@ for i, (index, score, fairness_index, total) in enumerate(best_connections[:3]):
         print(row)
     print()
 print("======================")
+
 if middle_index >= 0:
     print("Middle Connection:")
     mid_index, mid_score, mid_fairness, mid_total = best_connections[middle_index]
