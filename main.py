@@ -22,6 +22,7 @@
 # connection algorithm
 import csv
 import sys
+import pandas as pd
 import itertools
 import copy
 import datetime
@@ -116,7 +117,6 @@ with open("coordinates.csv", newline='') as csvfile:
         x = float(row["X"])
         y = float(row["Y"])
         entity_type = row["Type"]
-
         # 根据实体类型将坐标信息添加到相应的数组
         if entity_type == "AP":
             ap_coordinates.append((name, x, y))
@@ -154,11 +154,15 @@ num_hosts = len(host_coordinates)
 num_aps = len(ap_coordinates)
 results = [[0.0] * num_aps for _ in range(num_hosts)]
 
+# 读取墙面信息
+walls_data = pd.read_csv("Walls.csv")
+
 # 遍历每个主机和每个接入点，计算吞吐量
 for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
     for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
-        nk = [0, 0, 0, 0, 0, 0]  # Update this with the appropriate nk values
-
+        # 查找墙面信息
+        wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
+        nk = wall_info.iloc[0, 2:].tolist()  # 从第三列开始是墙面信息
         if ap_name.endswith("2"):
             # 如果是结尾为偶数的接口代表着TP-Link T4UH
             # 使用parameter2的数据
