@@ -1,4 +1,4 @@
-Date and Time: 2023-11-13 16:30
+Date and Time: 2023-11-25 14:19
 ======================
 Devices number
 ----------------------
@@ -266,5 +266,5 @@ Connection 13:
 [0, 1]
 [1, 0]
 ======================
-Code executed in 0.01 seconds
+Code executed in 0.03 seconds
 ======================

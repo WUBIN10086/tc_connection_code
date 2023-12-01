@@ -1,6 +1,6 @@
 #======================================================
 # Throughput estimation model calculation
-# Last modify date: 2023 10/27
+# Last modify date: 2023 11/28
 #======================================================
 # Change: make function code
 #         example for 80211n protocol TP-Link T4UH ver.2
@@ -9,6 +9,7 @@
 #                         3. Thr. calc.
 # Change log: fix calculate
 #             run success
+#             Add wall interference
 #======================================================
 import math
 
