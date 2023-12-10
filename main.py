@@ -1,9 +1,10 @@
 #================================================================
 # Connection decision model calculation
-# Last modify date: 2023 11/12
+# Last modify date: 2023 12/11
 #================================================================
 # Change: make main code
 #         example for 80211n protocol TP-Link T4UH ver.2
+#         add paramteres file for modified PC
 # funcation list: 1. read file
 #                 2. use function
 #                 3. connection decide algorithm
@@ -168,6 +169,28 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
             # 使用parameter2的数据
             # 5Ghz频段 带宽40Mhz
             with open("parameters2.txt", "r") as file:
+                parameters = {}
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('#'):
+                        continue
+                    key_value = line.split('=')
+                    if len(key_value) == 2:
+                        key, value = map(str.strip, key_value)
+                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                            parameters[key] = float(value)
+                        elif key == 'Wk':
+                            parameters[key] = list(map(float, value.split()))
+            try:
+                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                print(f"{host_name} for {ap_name}: {result}")
+                results[i][j] = result
+
+            except ValueError as e:
+                print(e)
+        elif ap_name.endswith("3"):
+            # 加入一个新的parameters3，作为当主机吞吐量与其他主机相差较大时，调整仿真到符合现实测量
+            with open("parameters3.txt", "r") as file:
                 parameters = {}
                 for line in file:
                     line = line.strip()
