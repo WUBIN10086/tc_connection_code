@@ -1,8 +1,8 @@
-Date and Time: 2023-11-25 14:19
+Date and Time: 2023-12-12 17:11
 ======================
 Devices number
 ----------------------
-Number of Hosts: 4
+Number of Hosts: 5
 Number of APs: 2
 ======================
 Deivces Location
@@ -15,7 +15,8 @@ Host Coordinates:
 ('H1', 11.0, 15.0)
 ('H2', 15.4, 15.2)
 ('H3', 10.0, 10.5)
-('H4', 10.0, 15.2)
+('H4', 11.0, 13.2)
+('H5', 13.5, 8.0)
 ======================
 Single Throughput
 ----------------------
@@ -25,8 +26,10 @@ H2 for AP1: 55.49
 H2 for AP2: 127.64
 H3 for AP1: 54.42
 H3 for AP2: 126.07
-H4 for AP1: 54.73
-H4 for AP2: 126.53
+H4 for AP1: 57.4
+H4 for AP2: 130.32
+H5 for AP1: 42.95
+H5 for AP2: 119.67
 ======================
 Connection assignments
 ----------------------
@@ -34,8 +37,10 @@ Connection 1:
 [0, 1]
 [0, 1]
 [0, 1]
+[0, 1]
 [1, 0]
 Connection 2:
+[0, 1]
 [0, 1]
 [0, 1]
 [1, 0]
@@ -43,59 +48,167 @@ Connection 2:
 Connection 3:
 [0, 1]
 [0, 1]
+[0, 1]
 [1, 0]
 [1, 0]
 Connection 4:
+[0, 1]
 [0, 1]
 [1, 0]
 [0, 1]
 [0, 1]
 Connection 5:
 [0, 1]
+[0, 1]
 [1, 0]
 [0, 1]
 [1, 0]
 Connection 6:
+[0, 1]
 [0, 1]
 [1, 0]
 [1, 0]
 [0, 1]
 Connection 7:
 [0, 1]
+[0, 1]
 [1, 0]
 [1, 0]
 [1, 0]
 Connection 8:
+[0, 1]
 [1, 0]
 [0, 1]
 [0, 1]
 [0, 1]
 Connection 9:
+[0, 1]
 [1, 0]
 [0, 1]
 [0, 1]
 [1, 0]
 Connection 10:
+[0, 1]
 [1, 0]
 [0, 1]
 [1, 0]
 [0, 1]
 Connection 11:
+[0, 1]
 [1, 0]
 [0, 1]
 [1, 0]
 [1, 0]
 Connection 12:
+[0, 1]
 [1, 0]
 [1, 0]
 [0, 1]
 [0, 1]
 Connection 13:
+[0, 1]
 [1, 0]
 [1, 0]
 [0, 1]
 [1, 0]
 Connection 14:
+[0, 1]
+[1, 0]
+[1, 0]
+[1, 0]
+[0, 1]
+Connection 15:
+[0, 1]
+[1, 0]
+[1, 0]
+[1, 0]
+[1, 0]
+Connection 16:
+[1, 0]
+[0, 1]
+[0, 1]
+[0, 1]
+[0, 1]
+Connection 17:
+[1, 0]
+[0, 1]
+[0, 1]
+[0, 1]
+[1, 0]
+Connection 18:
+[1, 0]
+[0, 1]
+[0, 1]
+[1, 0]
+[0, 1]
+Connection 19:
+[1, 0]
+[0, 1]
+[0, 1]
+[1, 0]
+[1, 0]
+Connection 20:
+[1, 0]
+[0, 1]
+[1, 0]
+[0, 1]
+[0, 1]
+Connection 21:
+[1, 0]
+[0, 1]
+[1, 0]
+[0, 1]
+[1, 0]
+Connection 22:
+[1, 0]
+[0, 1]
+[1, 0]
+[1, 0]
+[0, 1]
+Connection 23:
+[1, 0]
+[0, 1]
+[1, 0]
+[1, 0]
+[1, 0]
+Connection 24:
+[1, 0]
+[1, 0]
+[0, 1]
+[0, 1]
+[0, 1]
+Connection 25:
+[1, 0]
+[1, 0]
+[0, 1]
+[0, 1]
+[1, 0]
+Connection 26:
+[1, 0]
+[1, 0]
+[0, 1]
+[1, 0]
+[0, 1]
+Connection 27:
+[1, 0]
+[1, 0]
+[0, 1]
+[1, 0]
+[1, 0]
+Connection 28:
+[1, 0]
+[1, 0]
+[1, 0]
+[0, 1]
+[0, 1]
+Connection 29:
+[1, 0]
+[1, 0]
+[1, 0]
+[0, 1]
+[1, 0]
+Connection 30:
+[1, 0]
 [1, 0]
 [1, 0]
 [1, 0]
@@ -104,167 +217,300 @@ Connection 14:
 Concurret throughput
 ----------------------
 Connection 1 Results:
-[[0, 33.74], [0, 33.48], [0, 33.07], [54.73, 0]]
+[[0, 22.09], [0, 21.93], [0, 21.66], [0, 22.39], [42.95, 0]]
 
 Connection 2 Results:
-[[0, 33.74], [0, 33.48], [54.42, 0], [0, 33.19]]
+[[0, 22.09], [0, 21.93], [0, 21.66], [57.4, 0], [0, 20.56]]
 
 Connection 3 Results:
-[[0, 57.16], [0, 56.73], [24.19, 0], [24.32, 0]]
+[[0, 33.74], [0, 33.48], [0, 33.07], [25.51, 0], [19.09, 0]]
 
 Connection 4 Results:
-[[0, 33.74], [55.49, 0], [0, 33.07], [0, 33.19]]
+[[0, 22.09], [0, 21.93], [54.42, 0], [0, 22.39], [0, 20.56]]
 
 Connection 5 Results:
-[[0, 57.16], [24.66, 0], [0, 56.03], [24.32, 0]]
+[[0, 33.74], [0, 33.48], [24.19, 0], [0, 34.18], [19.09, 0]]
 
 Connection 6 Results:
-[[0, 57.16], [24.66, 0], [24.19, 0], [0, 56.24]]
+[[0, 33.74], [0, 33.48], [24.19, 0], [25.51, 0], [0, 31.39]]
 
 Connection 7 Results:
-[[0, 128.62], [14.55, 0], [14.27, 0], [14.36, 0]]
+[[0, 57.16], [0, 56.73], [14.27, 0], [15.06, 0], [11.27, 0]]
 
 Connection 8 Results:
-[[56.17, 0], [0, 33.48], [0, 33.07], [0, 33.19]]
+[[0, 22.09], [55.49, 0], [0, 21.66], [0, 22.39], [0, 20.56]]
 
 Connection 9 Results:
-[[24.96, 0], [0, 56.73], [0, 56.03], [24.32, 0]]
+[[0, 33.74], [24.66, 0], [0, 33.07], [0, 34.18], [19.09, 0]]
 
 Connection 10 Results:
-[[24.96, 0], [0, 56.73], [24.19, 0], [0, 56.24]]
+[[0, 33.74], [24.66, 0], [0, 33.07], [25.51, 0], [0, 31.39]]
 
 Connection 11 Results:
-[[14.73, 0], [0, 127.64], [14.27, 0], [14.36, 0]]
+[[0, 57.16], [14.55, 0], [0, 56.03], [15.06, 0], [11.27, 0]]
 
 Connection 12 Results:
-[[24.96, 0], [24.66, 0], [0, 56.03], [0, 56.24]]
+[[0, 33.74], [24.66, 0], [24.19, 0], [0, 34.18], [0, 31.39]]
 
 Connection 13 Results:
-[[14.73, 0], [14.55, 0], [0, 126.07], [14.36, 0]]
+[[0, 57.16], [14.55, 0], [14.27, 0], [0, 57.92], [11.27, 0]]
 
 Connection 14 Results:
-[[14.73, 0], [14.55, 0], [14.27, 0], [0, 126.53]]
+[[0, 57.16], [14.55, 0], [14.27, 0], [15.06, 0], [0, 53.19]]
+
+Connection 15 Results:
+[[0, 128.62], [9.53, 0], [9.35, 0], [9.86, 0], [7.38, 0]]
+
+Connection 16 Results:
+[[56.17, 0], [0, 21.93], [0, 21.66], [0, 22.39], [0, 20.56]]
+
+Connection 17 Results:
+[[24.96, 0], [0, 33.48], [0, 33.07], [0, 34.18], [19.09, 0]]
+
+Connection 18 Results:
+[[24.96, 0], [0, 33.48], [0, 33.07], [25.51, 0], [0, 31.39]]
+
+Connection 19 Results:
+[[14.73, 0], [0, 56.73], [0, 56.03], [15.06, 0], [11.27, 0]]
+
+Connection 20 Results:
+[[24.96, 0], [0, 33.48], [24.19, 0], [0, 34.18], [0, 31.39]]
+
+Connection 21 Results:
+[[14.73, 0], [0, 56.73], [14.27, 0], [0, 57.92], [11.27, 0]]
+
+Connection 22 Results:
+[[14.73, 0], [0, 56.73], [14.27, 0], [15.06, 0], [0, 53.19]]
+
+Connection 23 Results:
+[[9.65, 0], [0, 127.64], [9.35, 0], [9.86, 0], [7.38, 0]]
+
+Connection 24 Results:
+[[24.96, 0], [24.66, 0], [0, 33.07], [0, 34.18], [0, 31.39]]
+
+Connection 25 Results:
+[[14.73, 0], [14.55, 0], [0, 56.03], [0, 57.92], [11.27, 0]]
+
+Connection 26 Results:
+[[14.73, 0], [14.55, 0], [0, 56.03], [15.06, 0], [0, 53.19]]
+
+Connection 27 Results:
+[[9.65, 0], [9.53, 0], [0, 126.07], [9.86, 0], [7.38, 0]]
+
+Connection 28 Results:
+[[14.73, 0], [14.55, 0], [14.27, 0], [0, 57.92], [0, 53.19]]
+
+Connection 29 Results:
+[[9.65, 0], [9.53, 0], [9.35, 0], [0, 130.32], [7.38, 0]]
+
+Connection 30 Results:
+[[9.65, 0], [9.53, 0], [9.35, 0], [9.86, 0], [0, 119.67]]
 
 ======================
 Fairness connection results
 ----------------------
 Connection 1 Results:
-[[0, 33.43], [0, 33.43], [0, 33.43], [54.73, 0]]
+[[0, 22.01], [0, 22.01], [0, 22.01], [0, 22.01], [42.95, 0]]
 
 Connection 2 Results:
-[[0, 33.47], [0, 33.47], [54.42, 0], [0, 33.47]]
+[[0, 21.54], [0, 21.54], [0, 21.54], [57.4, 0], [0, 21.54]]
 
 Connection 3 Results:
-[[0, 56.94], [0, 56.94], [24.25, 0], [24.25, 0]]
+[[0, 33.43], [0, 33.43], [0, 33.43], [21.84, 0], [21.84, 0]]
 
 Connection 4 Results:
-[[0, 33.33], [55.49, 0], [0, 33.33], [0, 33.33]]
+[[0, 21.72], [0, 21.72], [54.42, 0], [0, 21.72], [0, 21.72]]
 
 Connection 5 Results:
-[[0, 56.59], [24.49, 0], [0, 56.59], [24.49, 0]]
+[[0, 33.8], [0, 33.8], [21.34, 0], [0, 33.8], [21.34, 0]]
 
 Connection 6 Results:
-[[0, 56.7], [24.42, 0], [24.42, 0], [0, 56.7]]
+[[0, 32.84], [0, 32.84], [24.83, 0], [24.83, 0], [0, 32.84]]
 
 Connection 7 Results:
-[[0, 128.62], [14.39, 0], [14.39, 0], [14.39, 0]]
+[[0, 56.94], [0, 56.94], [13.32, 0], [13.32, 0], [13.32, 0]]
 
 Connection 8 Results:
-[[56.17, 0], [0, 33.25], [0, 33.25], [0, 33.25]]
+[[0, 21.65], [55.49, 0], [0, 21.65], [0, 21.65], [0, 21.65]]
 
 Connection 9 Results:
-[[24.64, 0], [0, 56.38], [0, 56.38], [24.64, 0]]
+[[0, 33.66], [21.52, 0], [0, 33.66], [0, 33.66], [21.52, 0]]
 
 Connection 10 Results:
-[[24.57, 0], [0, 56.48], [24.57, 0], [0, 56.48]]
+[[0, 32.7], [25.08, 0], [0, 32.7], [25.08, 0], [0, 32.7]]
 
 Connection 11 Results:
-[[14.45, 0], [0, 127.64], [14.45, 0], [14.45, 0]]
+[[0, 56.59], [13.4, 0], [0, 56.59], [13.4, 0], [13.4, 0]]
 
 Connection 12 Results:
-[[24.81, 0], [24.81, 0], [0, 56.13], [0, 56.13]]
+[[0, 33.06], [24.42, 0], [24.42, 0], [0, 33.06], [0, 33.06]]
 
 Connection 13 Results:
-[[14.55, 0], [14.55, 0], [0, 126.07], [14.55, 0]]
+[[0, 57.54], [13.18, 0], [13.18, 0], [0, 57.54], [13.18, 0]]
 
 Connection 14 Results:
-[[14.51, 0], [14.51, 0], [14.51, 0], [0, 126.53]]
+[[0, 55.1], [14.62, 0], [14.62, 0], [14.62, 0], [0, 55.1]]
+
+Connection 15 Results:
+[[0, 128.62], [8.91, 0], [8.91, 0], [8.91, 0], [8.91, 0]]
+
+Connection 16 Results:
+[[56.17, 0], [0, 21.61], [0, 21.61], [0, 21.61], [0, 21.61]]
+
+Connection 17 Results:
+[[21.63, 0], [0, 33.57], [0, 33.57], [0, 33.57], [21.63, 0]]
+
+Connection 18 Results:
+[[25.23, 0], [0, 32.62], [0, 32.62], [25.23, 0], [0, 32.62]]
+
+Connection 19 Results:
+[[13.45, 0], [0, 56.38], [0, 56.38], [13.45, 0], [13.45, 0]]
+
+Connection 20 Results:
+[[24.57, 0], [0, 32.97], [24.57, 0], [0, 32.97], [0, 32.97]]
+
+Connection 21 Results:
+[[13.23, 0], [0, 57.32], [13.23, 0], [0, 57.32], [13.23, 0]]
+
+Connection 22 Results:
+[[14.68, 0], [0, 54.9], [14.68, 0], [14.68, 0], [0, 54.9]]
+
+Connection 23 Results:
+[[8.94, 0], [0, 127.64], [8.94, 0], [8.94, 0], [8.94, 0]]
+
+Connection 24 Results:
+[[24.81, 0], [24.81, 0], [0, 32.84], [0, 32.84], [0, 32.84]]
+
+Connection 25 Results:
+[[13.31, 0], [13.31, 0], [0, 56.96], [0, 56.96], [13.31, 0]]
+
+Connection 26 Results:
+[[14.78, 0], [14.78, 0], [0, 54.57], [14.78, 0], [0, 54.57]]
+
+Connection 27 Results:
+[[8.98, 0], [8.98, 0], [0, 126.07], [8.98, 0], [8.98, 0]]
+
+Connection 28 Results:
+[[14.51, 0], [14.51, 0], [14.51, 0], [0, 55.45], [0, 55.45]]
+
+Connection 29 Results:
+[[8.87, 0], [8.87, 0], [8.87, 0], [0, 130.32], [8.87, 0]]
+
+Connection 30 Results:
+[[9.59, 0], [9.59, 0], [9.59, 0], [9.59, 0], [0, 119.67]]
 
 Connection 1 fairness index:
-0.946398
+0.90726
 Connection 2 fairness index:
-0.947934
+0.800267
 Connection 3 fairness index:
-0.8605
+0.962571
 Connection 4 fairness index:
-0.942559
+0.82357
 Connection 5 fairness index:
-0.864498
+0.957055
 Connection 6 fairness index:
-0.863299
+0.98277
 Connection 7 fairness index:
-0.429842
+0.674594
 Connection 8 fairness index:
-0.939121
+0.815077
 Connection 9 fairness index:
-0.866948
+0.959111
 Connection 10 fairness index:
-0.865797
+0.984398
 Connection 11 fairness index:
-0.432039
+0.677621
 Connection 12 fairness index:
-0.869767
+0.979967
 Connection 13 fairness index:
-0.435678
+0.669407
 Connection 14 fairness index:
-0.434463
+0.707093
+Connection 15 fairness index:
+0.320051
+Connection 16 fairness index:
+0.809773
+Connection 17 fairness index:
+0.960367
+Connection 18 fairness index:
+0.985324
+Connection 19 fairness index:
+0.679486
+Connection 20 fairness index:
+0.981051
+Connection 21 fairness index:
+0.671276
+Connection 22 fairness index:
+0.709166
+Connection 23 fairness index:
+0.321456
+Connection 24 fairness index:
+0.982676
+Connection 25 fairness index:
+0.67432
+Connection 26 fairness index:
+0.712621
+Connection 27 fairness index:
+0.323636
+Connection 28 fairness index:
+0.703393
+Connection 29 fairness index:
+0.317836
+Connection 30 fairness index:
+0.340035
 
 Judgement weigth: Fairness index: 0.70, Total throughput: 0.30
 ======================
 
 Top 3 Best Connections:
-Rank 1: Connection[3], Total Score: 73.59, Fairness Index: 0.860500, Total Throughput: 162.38
+Rank 1: Connection[18], Total Score: 83.91, Fairness Index: 0.985324, Total Throughput: 148.32
 Connection Details:
-Connection 3:
+Connection 18:
+[1, 0]
 [0, 1]
 [0, 1]
 [1, 0]
-[1, 0]
+[0, 1]
 
-Rank 2: Connection[6], Total Score: 73.54, Fairness Index: 0.863299, Total Throughput: 162.24
+Rank 2: Connection[10], Total Score: 83.79, Fairness Index: 0.984398, Total Throughput: 148.26
+Connection Details:
+Connection 10:
+[0, 1]
+[1, 0]
+[0, 1]
+[1, 0]
+[0, 1]
+
+Rank 3: Connection[6], Total Score: 83.61, Fairness Index: 0.982770, Total Throughput: 148.18
 Connection Details:
 Connection 6:
 [0, 1]
+[0, 1]
 [1, 0]
 [1, 0]
 [0, 1]
-
-Rank 3: Connection[5], Total Score: 73.48, Fairness Index: 0.864498, Total Throughput: 162.16
-Connection Details:
-Connection 5:
-[0, 1]
-[1, 0]
-[0, 1]
-[1, 0]
 
 ======================
 Middle Connection:
-Rank 8: Connection[4], Total Score: 67.13, Fairness Index: 0.942559, Total Throughput: 155.48
+Rank 16: Connection[21], Total Score: 67.10, Fairness Index: 0.671276, Total Throughput: 154.33
 Connection Details:
-Connection 4:
-[0, 1]
+Connection 21:
 [1, 0]
 [0, 1]
-[0, 1]
-======================
-Worst Connection:
-Rank 14: Connection[13], Total Score: 56.84, Fairness Index: 0.435678, Total Throughput: 169.72
-Connection Details:
-Connection 13:
-[1, 0]
 [1, 0]
 [0, 1]
 [1, 0]
 ======================
-Code executed in 0.03 seconds
+Worst Connection:
+Rank 30: Connection[30], Total Score: 47.11, Fairness Index: 0.340035, Total Throughput: 158.03
+Connection Details:
+Connection 30:
+[1, 0]
+[1, 0]
+[1, 0]
+[1, 0]
+[0, 1]
+======================
+Code executed in 0.01 seconds
 ======================
