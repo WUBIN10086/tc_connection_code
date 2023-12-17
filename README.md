@@ -10,7 +10,6 @@ Throughput control code is written by Shell, here this code is for calc. best co
 
 加入墙面的影响
 
-
 ## Code List
 
 + throughput estimation model
@@ -30,6 +29,8 @@ Here will give some descriptions for codes files.
 + Throughput estimation model also refer to https://doi.org/10.3390/signals4020015
 + the parameters in "parameters.txt" are already optimized by POT
 
+---
+
 ### Strategy for finding the optimal plan
 
 + Consider both fairness index and total throughput size
@@ -41,7 +42,6 @@ Normalization works by converting data to a common scale so that data of differe
 
 Specifically, this normalization method uses min-max scaling, which converts the range of the data to [0, 1] using the following formula:
 
-normalized_value=value−min_valuemax_value−min_valuenormalized_value=max_value−min_valuevalue−min_value
 
 Here：
 
@@ -51,29 +51,56 @@ Here：
 - `normalized_value` is the normalized value.
 
 $$
-normalized_value= \frac{（max_{value}−min_{value}）}{ （value−min_{value}）}
+normalized_{value}= \frac{（max_{value}−min_{value}）}{ （value−min_{value}）}
 $$
 
 In this way, each value in the dataset is converted to a number between 0 and 1, where the minimum value becomes 0, the maximum value becomes 1, and the remaining values are scaled according to their proportions relative to the maximum and minimum values. This allows data that would otherwise be on different scales (e.g., fairness index and total throughput) to be compared and weighted in a uniform manner.
+
+---
+
+### Normalized data
+
+The normalized data is the `total throughput`, such that the size of the total throughput is transformed into a number between 0 and 1, and the `fairness index` is also a number between 0 and 1.
+
+If the difference in total throughput is not too large: (due to fluctuations in throughput during actual experimental testing, the size of the throughput for each Host may fluctuate between 5Mbps up and down)
+
++ we set $W_1$ as 0.3, $W_2$ as 0.7
++ conversely, set $W_1$ as 0.7, $W_2$ as 0.3
+
+The equation to calculate the scores of each plan is :
+$$
+scores = ( W_1 * fair~index + W_2 * normalized~total~throughput) * 100
+$$
+
 
 ## How to use
 
 Step:
 
-1. Measure the RSS and throughput for new experiment space or new device.
+1. Measure the RSS and throughputs for new experiment space or new devices.
 2. use POT to get the optimized parameters.
-3. input the parameters in "parameters.txt"
+3. input the parameters in "parameters.txt", and here, different parameters date file is for different frequency ( 2.4Ghz or 5Ghz )
 4. decide the position for APs and Hosts.
 5. input the coordinates in "coordinates.csv"
+6. input the walls in "Wall.csv"
 6. run main.py
+6. see the results in "Output.txt"
 
 ## Measurement Setup
 
-+ static Ip name rule:
++ static ip name rule:
 
 | Host number | 2.4GHz        | 5GHz          |
 | ----------- | ------------- | ------------- |
 | Host 1      | 192.168.11.12 | 192.168.11.15 |
 | Host 2      | 192.168.11.22 | 192.168.11.25 |
 | ...         |               |               |
+
++ channel assignments and devices:
+
+|            2.4Ghz             |           5Ghz            |
+| :---------------------------: | :-----------------------: |
+|         channel 9+13          |       channel 44+48       |
+|        40Mhz bandwidth        |      40Mhz bandwidth      |
+| Raspberry pi 4B+ embedded NIC | TP-LINK T4UH external NIC |
 
