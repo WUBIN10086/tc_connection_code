@@ -42,7 +42,6 @@ Normalization works by converting data to a common scale so that data of differe
 
 Specifically, this normalization method uses min-max scaling, which converts the range of the data to [0, 1] using the following formula:
 
-
 Here：
 
 - `value` is a value in the original data.
@@ -68,10 +67,10 @@ If the difference in total throughput is not too large: (due to fluctuations in 
 + conversely, set $W_1$ as 0.7, $W_2$ as 0.3
 
 The equation to calculate the scores of each plan is :
+
 $$
 scores = ( W_1 * fair~index + W_2 * normalized~total~throughput) * 100
 $$
-
 
 ## How to use
 
@@ -83,8 +82,8 @@ Step:
 4. decide the position for APs and Hosts.
 5. input the coordinates in "coordinates.csv"
 6. input the walls in "Wall.csv"
-6. run main.py
-6. see the results in "Output.txt"
+7. run main.py
+8. see the results in "Output.txt"
 
 ## Measurement Setup
 
@@ -98,9 +97,8 @@ Step:
 
 + channel assignments and devices:
 
-|            2.4Ghz             |           5Ghz            |
+|            2.4Ghz            |           5Ghz           |
 | :---------------------------: | :-----------------------: |
-|         channel 9+13          |       channel 44+48       |
+|         channel 9+13         |       channel 44+48       |
 |        40Mhz bandwidth        |      40Mhz bandwidth      |
 | Raspberry pi 4B+ embedded NIC | TP-LINK T4UH external NIC |
-
