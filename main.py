@@ -371,10 +371,12 @@ for i, fair_results in enumerate(all_fair_results):
         total += sum(sub_list)
     all_totals.append(total)
 
-# 指定阈值
-impact_threshold = 10
 # 计算所有连接方式的数量
 connection_num = len(all_matrices)
+
+# 指定阈值
+# 阈值根据连接数量进行调整，假设一个Host大约上下浮动3Mbps左右
+impact_threshold = host_n * 3
 
 def categorize_throughput(data, threshold):
     # 计算均值
@@ -389,8 +391,8 @@ def categorize_throughput(data, threshold):
             cont += 1
         else:
             cont -= 1
-    # 如果大部分（1/2）的连接情况下，吞吐量相差不大，则优先考虑公平性指数
-    if cont >= connection_num / 2:
+    # 如果大部分（80%）的连接情况下，吞吐量相差不大，则优先考虑公平性指数
+    if cont >= connection_num * 0.8:
         return True
 
 # 调用均值计算函数

@@ -14,10 +14,10 @@ def calculate_fairness_index(X):
         return "Zero division error. Please provide a matrix with non-zero values."
 
 R = [
-29.7,
-53.9,
-30.8,
-30.9]
+59.4,
+21.9,
+28.4,
+54.2]
 
 index = calculate_fairness_index(R)
 print(f"{index:.4f}")
