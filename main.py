@@ -1,6 +1,6 @@
 #================================================================
 # Connection decision model calculation
-# Last modify date: 2023 12/11
+# Last modify date: 2024 03/31
 #================================================================
 # Change: make main code
 #         example for 80211n protocol TP-Link T4UH ver.2
@@ -16,6 +16,9 @@
 # 5. Calculate Fairness throughput
 # 6. Sort by total throughput and fairness index
 # 7. Give the best three assignments and middle, worest assignment.
+#
+# Upgarde:
+# Accelerated computing efficiency
 #=================================================================
 
 
