@@ -81,6 +81,7 @@ Step:
 3. input the parameters in "parameters.txt", and here, different parameters date file is for different frequency ( 2.4Ghz or 5Ghz )
 4. decide the position for APs and Hosts.
 5. input the coordinates in "coordinates.csv"
+   coordinates decided by the xlsx file `Floor_Plan_for_estimation`, the row of this file represent the X axis, and column represent the Y axis.
 6. input the walls in "Wall.csv"
 7. run main.py
 8. see the results in "Output.txt"
