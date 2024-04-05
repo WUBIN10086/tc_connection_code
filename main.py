@@ -35,6 +35,7 @@ from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
 from fairness_calc import Fairness_calc
 from fairness_index import calculate_fairness_index
+from write_to_output import write_to_file
 
 #---------------------------------------------------------------------
 
@@ -63,15 +64,16 @@ from fairness_index import calculate_fairness_index
 # 记录开始时间
 start_time = time.time()
 # 输出结果到文本文件
-output_file = open("output.txt", "w")
-sys.stdout = output_file
+#output_file = open("output.txt", "w")
+#sys.stdout = output_file
 
 # 获取当前日期和时间
 current_datetime = datetime.datetime.now()
 formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M")
-print("Date and Time:", formatted_datetime)
-
-
+#print("Date and Time:", formatted_datetime)
+write_to_file(f"Date and Time: {formatted_datetime}")
+# 开始处理标志：
+print("START!!!")
 
 # 从 CSV 文件中读取 Host 和 AP 的数量
 with open("coordinates.csv", newline='') as csvfile:
@@ -85,11 +87,17 @@ with open("coordinates.csv", newline='') as csvfile:
             AP_m += 1
 
 # 输出 Host 和 AP 的数量
-print("======================")
-print("Devices number")
-print("----------------------")
-print(f"Number of Hosts: {host_n}")
-print(f"Number of APs: {AP_m}")
+#print("======================")
+#print("Devices number")
+#print("----------------------")
+#print(f"Number of Hosts: {host_n}")
+#print(f"Number of APs: {AP_m}")
+write_to_file(f"======================")
+write_to_file(f"Devices number")
+write_to_file(f"----------------------")
+write_to_file(f"Number of Hosts: {host_n}")
+write_to_file(f"Number of APs: {AP_m}")
+print("Read Devices number: Finished")
 
 # 存储所有的连接方式
 all_matrices = []
@@ -104,7 +112,9 @@ for combination in itertools.product([0, 1], repeat=host_n * AP_m):
             # 筛选条件3：检查每一行是否至少有一个 1
             if all(1 in row for row in matrix):
                 all_matrices.append(matrix)
-
+write_to_file(f"----------------------")
+write_to_file(f"Connection number: {len(all_matrices)}")
+print("Connection Assignment: Finished")
 #---------------------------------------------------------------------
 
 
@@ -127,18 +137,19 @@ with open("coordinates.csv", newline='') as csvfile:
         elif entity_type == "Host":
             host_coordinates.append((name, x, y))
 
-print("======================")
-print("Deivces Location")
-print("----------------------")
+write_to_file("======================")
+write_to_file("Deivces Location")
+write_to_file("----------------------")
 # 打印AP和Host的坐标数组
-print("AP Coordinates:")
+write_to_file("AP Coordinates:")
 for ap in ap_coordinates:
-    print(ap)
-print("----------------------")
-print("Host Coordinates:")
+    write_to_file(f"{ap}")
+write_to_file("----------------------")
+write_to_file("Host Coordinates:")
 for host in host_coordinates:
-    print(host)
-print("======================")
+    write_to_file(f"{host}")
+write_to_file("======================")
+print("Read Devices Location: Finished")
 
 # nk = [1, 2]  # 根据需要提供 nk 的值
 # nk 为AP和Host之间各种墙面的影响数量
@@ -149,8 +160,8 @@ print("======================")
 # the elevator wall for W5, 
 # and the door for W6.
 # Roy的程序中注释掉了墙面的影响，默认就是一堵墙
-print("Single Throughput")
-print("----------------------")
+write_to_file("Single Throughput")
+write_to_file("----------------------")
 results = []
 
 # 初始化结果数组，填充为0
@@ -167,7 +178,8 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
         # 查找墙面信息
         wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
         nk = wall_info.iloc[0, 2:].tolist()  # 从第三列开始是墙面信息
-        if ap_name.endswith("2"):
+        # 双括号表示参数是一个元组（tuple），而非单个字符串
+        if ap_name.endswith(("2", "4", "6")):
             # 如果是结尾为偶数的接口代表着TP-Link T4UH
             # 使用parameter2的数据
             # 5Ghz频段 带宽40Mhz
@@ -186,11 +198,11 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
                             parameters[key] = list(map(float, value.split()))
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                print(f"{host_name} for {ap_name}: {result}")
+                write_to_file(f"{host_name} for {ap_name}: {result}")
                 results[i][j] = result
 
             except ValueError as e:
-                print(e)
+                write_to_file(e)
         # elif ap_name.endswith("3"):
         #     # 加入一个新的parameters3，作为当主机吞吐量与其他主机相差较大时，调整仿真到符合现实测量
         #     with open("parameters3.txt", "r") as file:
@@ -230,30 +242,30 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
                             parameters[key] = list(map(float, value.split()))
             try:
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                print(f"{host_name} for {ap_name}: {result}")
+                write_to_file(f"{host_name} for {ap_name}: {result}")
                 results[i][j] = result
 
             except ValueError as e:
-                print(e)
+                write_to_file(e)
 #---------------------------------------------------------------------
-
+print("Single Throughput Calculated")
 
 #---------------------------------------------------------------------
 # 决定连接方案从而决定同时连接的数量m
 # concurrent throughput calc.
 # calc signal/success rate factor
-print("======================")
-print("Connection assignments")
-print("----------------------")
+write_to_file("======================")
+write_to_file("Connection assignments")
+write_to_file("----------------------")
 for i, matrix in enumerate(all_matrices):
-    print(f"Connection {i + 1}:")
+    write_to_file(f"Connection {i + 1}:")
     for row in matrix:
-        print(row)
+        write_to_file(f"{row}")
 
 # print(results)
-print("======================")
-print("Concurret throughput")
-print("----------------------")
+write_to_file("======================")
+write_to_file("Concurret throughput")
+write_to_file("----------------------")
 all_con_results = []
 # 遍历所有的链接情况
 # 更新results
@@ -282,10 +294,12 @@ for matrix in all_matrices:
     all_con_results.append(con_results)
 
 for i, con_results in enumerate(all_con_results):
-    print(f"Connection {i + 1} Results:")
-    print(all_con_results[i])
-    print()
+    write_to_file(f"Connection {i + 1} Results:")
+    write_to_file(f"{all_con_results[i]}")
+    #write_to_file()
 #---------------------------------------------------------------------
+print("Concurrent Throughput Calculated")
+
 
 #---------------------------------------------------------------------
 # 计算Fairness target throughput
@@ -312,33 +326,32 @@ for matrix in all_matrices:
     all_fair_results.append(fair_results)
     connect_index += 1
 
-print("======================")
-print("Fairness connection results")
-print("----------------------")
+write_to_file("======================")
+write_to_file("Fairness connection results")
+write_to_file("----------------------")
 for i, fair_results in enumerate(all_fair_results):
-    print(f"Connection {i + 1} Results:")
-    print(all_fair_results[i])
-    print()
-
+    write_to_file(f"Connection {i + 1} Results:")
+    write_to_file(f"{all_fair_results[i]}")
+    #write_to_file()
 #---------------------------------------------------------------------
+print("Fairness throughput Calculated")
 
 
 
 #---------------------------------------------------------------------
 # 计算fairness index
-
 # 初始化记录公平性指数的列表
 all_fairness_index =[]
 
 for i, fair_results in enumerate(all_fair_results):
-    print(f"Connection {i + 1} fairness index:")
+    write_to_file(f"Connection {i + 1} fairness index:")
     calc_value = all_fair_results[i]
     fairness_index = calculate_fairness_index(calc_value)
     fairness_index = round(fairness_index, 6)
-    print(fairness_index)
+    write_to_file(f"{fairness_index}")
     all_fairness_index.append(fairness_index)
 #---------------------------------------------------------------------
-
+print("Fairness index Calculated")
 
 
 #---------------------------------------------------------------------
@@ -407,7 +420,8 @@ else:
 
 W_1 = 1 - W_2
 
-print()
+#write_to_file()
+write_to_file(f"Judgement weight: Fairness index: {W_1:.2f}, Total throughput: {W_2:.2f}")
 print("Judgement weigth: Fairness index: {:.2f}, Total throughput: {:.2f}".format(W_1, W_2))
 
 # 归一化函数
@@ -442,39 +456,39 @@ best_connections.sort(key=lambda x: x[1], reverse=True)
 middle_index = len(best_connections) // 2  # 中间索引
 worst_index = -1  # 最差连接索引
 
-print("======================")
-print()
-print("Top 3 Best Connections:")
+write_to_file("======================")
+#write_to_file()
+write_to_file("Top 3 Best Connections:")
 
 # 输出最佳的三个连接方式
 for i, (index, score, fairness_index, total) in enumerate(best_connections[:3]):
-    print(f"Rank {i + 1}: Connection[{index+1}], Total Score: {score:.2f}, Fairness Index: {fairness_index:.6f}, Total Throughput: {total:.2f}")
-    print("Connection Details:")
-    print(f"Connection {index + 1}:")
+    write_to_file(f"Rank {i + 1}: Connection[{index+1}], Total Score: {score:.2f}, Fairness Index: {fairness_index:.6f}, Total Throughput: {total:.2f}")
+    write_to_file("Connection Details:")
+    write_to_file(f"Connection {index + 1}:")
     for row in all_matrices[index]:
-        print(row)
-    print()
-print("======================")
+        write_to_file(f"{row}")
+    #write_to_file()
+write_to_file("======================")
 
 if middle_index >= 0:
-    print("Middle Connection:")
+    write_to_file("Middle Connection:")
     mid_index, mid_score, mid_fairness, mid_total = best_connections[middle_index]
-    print(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Score: {mid_score:.2f}, Fairness Index: {mid_fairness:.6f}, Total Throughput: {mid_total:.2f}")
-    print("Connection Details:")
-    print(f"Connection {mid_index + 1}:")
+    write_to_file(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Score: {mid_score:.2f}, Fairness Index: {mid_fairness:.6f}, Total Throughput: {mid_total:.2f}")
+    write_to_file("Connection Details:")
+    write_to_file(f"Connection {mid_index + 1}:")
     for row in all_matrices[mid_index]:
-        print(row)
-    print("======================")
+        write_to_file(f"{row}")
+    write_to_file("======================")
 
 if worst_index == -1:
     worst_index, worst_score, worst_fairness, worst_total = best_connections[-1]
-    print("Worst Connection:")
-    print(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Score: {worst_score:.2f}, Fairness Index: {worst_fairness:.6f}, Total Throughput: {worst_total:.2f}")
-    print("Connection Details:")
-    print(f"Connection {worst_index + 1}:")
+    write_to_file("Worst Connection:")
+    write_to_file(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Score: {worst_score:.2f}, Fairness Index: {worst_fairness:.6f}, Total Throughput: {worst_total:.2f}")
+    write_to_file("Connection Details:")
+    write_to_file(f"Connection {worst_index + 1}:")
     for row in all_matrices[worst_index]:
-        print(row)
-    print("======================")
+        write_to_file(f"{row}")
+    write_to_file("======================")
 
 #---------------------------------------------------------------------
 # 输出代码运行时间
@@ -482,9 +496,10 @@ if worst_index == -1:
 end_time = time.time()
 # 计算代码执行时间
 execution_time = end_time - start_time
-print(f"Code executed in {execution_time:.2f} seconds")
-print("======================")
+write_to_file(f"Code executed in {execution_time:.2f} seconds")
+write_to_file("======================")
+print("Procedure Finished!!!")
 
 #---------------------------------------------------------------------
-output_file.close()
-sys.stdout = sys.__stdout__
+#output_file.close()
+#sys.stdout = sys.__stdout__
