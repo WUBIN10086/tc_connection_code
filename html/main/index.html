@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Floor Plan</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            height: 100%; /* Ensures that the body takes full viewport height */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; 
+        }
+        #floorplan {
+            width: fit-content;
+            height: fit-content;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="floorplan"></div>
+    <button onclick="addMarker('AP')">Add Access Point</button>
+    <button onclick="addMarker('Host')">Add Host</button>
+
+    <script>
+        // Function to collect wall positions for x-axis and y-axis tick values
+        function collectWallPositions() {
+            let xPositions = [0]; // Start with the leftmost wall
+            let yPositions = [0]; // Start with the lowest horizontal wall
+            let currentX = 0;
+            let currentY = 0;
+
+            // X positions from room dimensions
+            [1,1,1.6,1.4,1,1,1,1,1.8,1.2,1,1,1,1,1,1,1,1,1,1,1,1,1.2,0.8,1,1,0.8,1.2,1,1.4].forEach(width => {
+                currentX += width;
+                xPositions.push(currentX);
+            });
+
+            // Y positions from room dimensions
+            [6.4, 2.5, 6.4].forEach(height => {
+                currentY += height;
+                yPositions.push(currentY);
+            });
+
+            return { xPositions, yPositions };
+        }
+
+        let wallPositions = collectWallPositions();
+
+        // Initialize the plot with wall positions on the x-axis and y-axis
+        Plotly.newPlot('floorplan', [], {
+            title: 'Interactive Floor Plan',
+            xaxis: { 
+                range: [0, 33], 
+                showgrid: true, 
+                tickvals: wallPositions.xPositions, // Show every 2 units
+            },
+            yaxis: { 
+                range: [0, 16], 
+                showgrid: false,
+                tickvals: wallPositions.yPositions,// Show every 2 units
+            },
+            height: 800,
+            width: 1200,
+            /* margin: {l: 50, r: 50, t: 50, b: 50} */
+        });
+
+        // Function to draw a room with individual trace for each room
+        function draw_room(x, y, width, height, room_label) {
+            let xs = [x, x + width, x + width, x, x];
+            let ys = [y, y, y + height, y + height, y];
+            let roomWalls = {
+                x: xs,
+                y: ys,
+                mode: 'lines',
+                type: 'scatter',
+                line: { width: 2, color: 'black' },
+                hoverinfo: 'none',
+                showlegend: false
+            };
+
+            let roomLabel = {
+                x: [x + width / 2],
+                y: [y + height / 2],
+                text: [room_label],
+                mode: 'text',
+                type: 'scatter',
+                textposition: 'middle center',
+                showlegend: false
+            };
+
+            Plotly.addTraces('floorplan', [roomWalls, roomLabel]);
+        }
+
+        // Drawing the rooms with specified dimensions
+        draw_room(0, 8.9, 3.6, 6.4, 'D308');
+        draw_room(3.6, 8.9, 7.2, 6.4, 'D307');
+        draw_room(10.8, 8.9, 7.2, 6.4, 'D306');
+        draw_room(18.0, 8.9, 7.2, 6.4, 'D305');
+        draw_room(25.2, 8.9, 3.6, 6.4, 'D303');
+        draw_room(28.8, 8.9, 3.6, 6.4, 'D301');
+        draw_room(0, 0, 3.6, 6.4, 'Stairs');
+        draw_room(3.6, 0, 7.2, 6.4, 'Refresh Corner');
+        draw_room(10.8, 0, 7.2, 6.4, 'Toilets');
+        draw_room(18.0, 0, 7.2, 6.4, 'D304');
+        draw_room(25.2, 0, 7.2, 6.4, 'D302');
+
+        // Function to add markers at random locations
+        function addMarker(type) {
+            const x = Math.random() * 30;
+            const y = Math.random() * 15;
+            const newMarker = {
+                x: [x],
+                y: [y],
+                text: [type],
+                mode: 'markers+text',
+                marker: { size: 12, color: type === 'AP' ? 'red' : 'green' },
+                textposition: 'bottom center'
+            };
+
+            Plotly.addTraces('floorplan', newMarker);
+        }
+    </script>
+</body>
+</html>
