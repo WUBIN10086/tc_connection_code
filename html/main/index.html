@@ -47,7 +47,7 @@
             });
 
             // Y positions from room dimensions
-            [6.4, 2.5, 6.4].forEach(height => {
+            [1,1,1,1,1,1,0.4,0.6,1,0.9, 1.1,1,1,1,1,1,0.4].forEach(height => {
                 currentY += height;
                 yPositions.push(currentY);
             });
@@ -67,7 +67,7 @@
             },
             yaxis: { 
                 range: [0, 16], 
-                showgrid: false,
+                showgrid: true,
                 tickvals: wallPositions.yPositions,// Show every 2 units
             },
             height: 800,
