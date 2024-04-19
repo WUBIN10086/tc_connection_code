@@ -33,8 +33,7 @@ import datetime
 import time
 from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
-from fairness_calc import Fairness_calc
-from fairness_index import calculate_fairness_index
+
 from write_to_output import write_to_file
 
 #---------------------------------------------------------------------
@@ -100,18 +99,37 @@ write_to_file(f"Number of APs: {AP_m}")
 print("Read Devices number: Finished")
 
 # 存储所有的连接方式
+# 文件路径
+file_path = 'ConnectedConfig.txt'
+
+# 初始化矩阵列表和当前矩阵
 all_matrices = []
+matrix = []
 
-for combination in itertools.product([0, 1], repeat=host_n * AP_m):
-    matrix = [list(combination[i:i+AP_m]) for i in range(0, host_n * AP_m, AP_m)]
-
-    # 筛选条件1：删除包含 1 多于一个的行
-    if all(row.count(1) <= 1 for row in matrix):
-        # 筛选条件2：检查每一列是否至少有一个 1
-        if all(any(row[j] == 1 for row in matrix) for j in range(AP_m)):
-            # 筛选条件3：检查每一行是否至少有一个 1
-            if all(1 in row for row in matrix):
+# 打开并读取文件
+with open(file_path, 'r') as file:
+    for line in file:
+        # 去除行尾的空白字符
+        line = line.strip()
+        if line == "":
+            # 如果遇到空行且当前矩阵不为空，添加到总列表中
+            if matrix:
                 all_matrices.append(matrix)
+                matrix = []
+        else:
+            # 将非空行添加到当前矩阵
+            try:
+                matrix.append([int(x) for x in line.split(',')])
+            except ValueError:
+                # 如果转换失败，打印错误消息并跳过该行
+                print(f"Skipping non-numeric line: {line}")
+
+# 检查文件末尾是否有未添加的矩阵
+if matrix:
+    all_matrices.append(matrix)
+
+# 输出矩阵数量和完成状态
+
 write_to_file(f"----------------------")
 write_to_file(f"Connection number: {len(all_matrices)}")
 print("Connection Assignment: Finished")
@@ -283,7 +301,7 @@ for matrix in all_matrices:
             elif matrix[i][j] == 0:
                 con_results[i][j] = 0
         # print("同时连接数量: ", con_num)
-        srf = calculate_srf(con_num)
+        srf = calculate_srf(con_num)#同时链接的
         if con_num == 1:
             continue
         else:
@@ -294,98 +312,20 @@ for matrix in all_matrices:
     all_con_results.append(con_results)
 
 for i, con_results in enumerate(all_con_results):
-    write_to_file(f"Connection {i + 1} Results:")
-    write_to_file(f"{all_con_results[i]}")
-    #write_to_file()
+    write_to_file(f"Connection {i + 1} Results:\n")
+    for result in con_results:
+        # 将结果列表转换为字符串，并用逗号和空格隔开各个元素，最后添加换行符
+        result_str = ', '.join(map(str, result))
+        write_to_file(f"[{result_str}]\n")
+
 #---------------------------------------------------------------------
 print("Concurrent Throughput Calculated")
 
 
-#---------------------------------------------------------------------
-# 计算Fairness target throughput
-connect_index = 0
-all_fair_results = []
-for matrix in all_matrices:
-    fair_results = [[0] * AP_m for _ in range(host_n)]
-    for j in range(AP_m):
-        fair_S = []
-        fair_C = []
-        n = 0
-        for i in range(host_n):
-            if matrix[i][j] == 1:
-                n += 1
-                fair_S.append(results[i][j])
-                fair_C.append(all_con_results[connect_index][i][j])
-        target = Fairness_calc(n,fair_S,fair_C)
-        # print(target)
-        # 用计算完的Fairness target更新预估结果
-        for i in range(host_n):
-            if matrix[i][j] == 1:
-                fair_results [i][j] = target
-    # print(fair_results)
-    all_fair_results.append(fair_results)
-    connect_index += 1
-
-write_to_file("======================")
-write_to_file("Fairness connection results")
-write_to_file("----------------------")
-for i, fair_results in enumerate(all_fair_results):
-    write_to_file(f"Connection {i + 1} Results:")
-    write_to_file(f"{all_fair_results[i]}")
-    #write_to_file()
-#---------------------------------------------------------------------
-print("Fairness throughput Calculated")
 
 
 
-#---------------------------------------------------------------------
-# 计算fairness index
-# 初始化记录公平性指数的列表
-all_fairness_index =[]
 
-for i, fair_results in enumerate(all_fair_results):
-    write_to_file(f"Connection {i + 1} fairness index:")
-    calc_value = all_fair_results[i]
-    fairness_index = calculate_fairness_index(calc_value)
-    fairness_index = round(fairness_index, 6)
-    write_to_file(f"{fairness_index}")
-    all_fairness_index.append(fairness_index)
-#---------------------------------------------------------------------
-print("Fairness index Calculated")
-
-
-#---------------------------------------------------------------------
-# 排序寻找最佳的连接方式
-# 因为fairness index和总吞吐量之间的单位相差过大，
-# 因此使用归一化方法，将总吞吐量转化为和fairness index一样的单位范围，
-# 然后通过设计权重去判断合适的最佳组合。
-
-best_connections = []
-
-# 根据结果确定权重，初始化权重
-W_1 = 0
-W_2 = 0
-
-# 判断总吞吐量的离散程度
-# 由于吞吐量在实际测量中存在上下波动，
-# 如果总吞吐量相差只有1或者2的话实际上不同的连接方式最后测量的结果相差不大
-# 若吞吐量相差不大的话则优先考虑公平性指数，如果总吞吐量相差过大则优先考虑吞吐量大小
-'''
-総スループットの分散を判断する
-実際の測定ではスループットは上下に変動するため、
-たとえば、総スループットの差が1か2しかない場合、異なる接続方法の間で最終的な測定値に大きな差は生じない。
-スループットの差が小さい場合は公平性指標を優先し、
-総スループットの差が大きすぎる場合はスループットサイズを優先する。
-'''
-
-
-# 计算每种连接方式下的总吞吐量大小
-all_totals =[]
-for i, fair_results in enumerate(all_fair_results):
-    total = 0
-    for sub_list in fair_results:
-        total += sum(sub_list)
-    all_totals.append(total)
 
 # 计算所有连接方式的数量
 connection_num = len(all_matrices)
@@ -411,84 +351,6 @@ def categorize_throughput(data, threshold):
     if cont >= connection_num * 0.8:
         return True
 
-# 调用均值计算函数
-throughput_data = all_totals
-if categorize_throughput(throughput_data, impact_threshold):
-    W_2 = 0.3
-else:
-    W_2 = 0.7
-
-W_1 = 1 - W_2
-
-#write_to_file()
-write_to_file(f"Judgement weight: Fairness index: {W_1:.2f}, Total throughput: {W_2:.2f}")
-print("Judgement weigth: Fairness index: {:.2f}, Total throughput: {:.2f}".format(W_1, W_2))
-
-# 归一化函数
-def normalize(data):
-    """
-    对数据进行归一化处理，使其范围在0到1之间。
-    :param data: 一个数字列表。
-    :return: 归一化后的数据列表。
-    """
-    min_val = min(data)
-    max_val = max(data)
-    return [(x - min_val) / (max_val - min_val) for x in data]
-
-# 归一化总吞吐量
-normalized_totals = normalize(all_totals)
-
-for i, fair_results in enumerate(all_fair_results):
-    total = 0
-    for sub_list in fair_results:
-        total += sum(sub_list)
-    
-    # 使用归一化的总吞吐量
-    normalized_total = normalized_totals[i]
-    fair_index = all_fairness_index[i]
-    # 计算综合得分，使用归一化的总吞吐量
-    score = ( W_1 * fair_index + W_2 * normalized_total) * 100
-    best_connections.append((i, score, fair_index, total))
-
-# 根据得分降序排序
-best_connections.sort(key=lambda x: x[1], reverse=True)  
-
-middle_index = len(best_connections) // 2  # 中间索引
-worst_index = -1  # 最差连接索引
-
-write_to_file("======================")
-#write_to_file()
-write_to_file("Top 3 Best Connections:")
-
-# 输出最佳的三个连接方式
-for i, (index, score, fairness_index, total) in enumerate(best_connections[:3]):
-    write_to_file(f"Rank {i + 1}: Connection[{index+1}], Total Score: {score:.2f}, Fairness Index: {fairness_index:.6f}, Total Throughput: {total:.2f}")
-    write_to_file("Connection Details:")
-    write_to_file(f"Connection {index + 1}:")
-    for row in all_matrices[index]:
-        write_to_file(f"{row}")
-    #write_to_file()
-write_to_file("======================")
-
-if middle_index >= 0:
-    write_to_file("Middle Connection:")
-    mid_index, mid_score, mid_fairness, mid_total = best_connections[middle_index]
-    write_to_file(f"Rank {middle_index + 1}: Connection[{mid_index + 1}], Total Score: {mid_score:.2f}, Fairness Index: {mid_fairness:.6f}, Total Throughput: {mid_total:.2f}")
-    write_to_file("Connection Details:")
-    write_to_file(f"Connection {mid_index + 1}:")
-    for row in all_matrices[mid_index]:
-        write_to_file(f"{row}")
-    write_to_file("======================")
-
-if worst_index == -1:
-    worst_index, worst_score, worst_fairness, worst_total = best_connections[-1]
-    write_to_file("Worst Connection:")
-    write_to_file(f"Rank {len(best_connections)}: Connection[{worst_index + 1}], Total Score: {worst_score:.2f}, Fairness Index: {worst_fairness:.6f}, Total Throughput: {worst_total:.2f}")
-    write_to_file("Connection Details:")
-    write_to_file(f"Connection {worst_index + 1}:")
-    for row in all_matrices[worst_index]:
-        write_to_file(f"{row}")
-    write_to_file("======================")
 
 #---------------------------------------------------------------------
 # 输出代码运行时间
@@ -499,6 +361,7 @@ execution_time = end_time - start_time
 write_to_file(f"Code executed in {execution_time:.2f} seconds")
 write_to_file("======================")
 print("Procedure Finished!!!")
+
 
 #---------------------------------------------------------------------
 #output_file.close()
