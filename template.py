@@ -1,3 +1,5 @@
+# this file is to fast calc. all results to fairness target
+
 from fairness_calc import Fairness_calc
 import csv
 

@@ -1,3 +1,5 @@
+# this is the test file to calc. the fairness index
+
 def calculate_fairness_index(X):
     try:
         # 检查X是否是一维数组
