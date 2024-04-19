@@ -72,7 +72,7 @@ $$
 scores = ( W_1 * fair~index + W_2 * normalized~total~throughput) * 100
 $$
 
-## How to use
+## How to use(need modify)
 
 Step:
 
