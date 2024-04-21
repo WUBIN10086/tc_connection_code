@@ -32,6 +32,8 @@ import copy
 import datetime
 import time
 from throughput_estimation import calculate_throughput_estimate
+from throughput_estimation import Rss_calculate
+from throughput_estimation import Distance
 from concurrent_calc import calculate_srf
 from throughput_estimation import Calculate_throughput
 from write_to_output import write_to_file
@@ -215,33 +217,15 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
                         elif key == 'Wk':
                             parameters[key] = list(map(float, value.split()))
             try:
+                d = Distance(host_x, host_y, ap_x, ap_y)
+                rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk,parameters['Wk'])
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                write_to_file(f"{host_name} for {ap_name}: {result}")
+                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
                 results[i][j] = result
 
             except ValueError as e:
                 write_to_file(e)
-        # elif ap_name.endswith("3"):
-        #     # 加入一个新的parameters3，作为当主机吞吐量与其他主机相差较大时，调整仿真到符合现实测量
-        #     with open("parameters3.txt", "r") as file:
-        #         parameters = {}
-        #         for line in file:
-        #             line = line.strip()
-        #             if line.startswith('#'):
-        #                 continue
-        #             key_value = line.split('=')
-        #             if len(key_value) == 2:
-        #                 key, value = map(str.strip, key_value)
-        #                 if key in ['alpha', 'P_1', 'a', 'b', 'c']:
-        #                     parameters[key] = float(value)
-        #                 elif key == 'Wk':
-        #                     parameters[key] = list(map(float, value.split()))
-        #     try:
-        #         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-        #         print(f"{host_name} for {ap_name}: {result}")
-        #         results[i][j] = result
-        #     except ValueError as e:
-        #         print(e)
+
         else:
             # 其他的时候使用普通的板载参数
             # 2.4GHz 80211n协议 40Mhz信道绑定
@@ -259,8 +243,10 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
                         elif key == 'Wk':
                             parameters[key] = list(map(float, value.split()))
             try:
+                d = Distance(host_x, host_y, ap_x, ap_y)
+                rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                write_to_file(f"{host_name} for {ap_name}: {result}")
+                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
                 results[i][j] = result
 
             except ValueError as e:
