@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Floor Plan</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #floorplan {
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="floorplan" width="1200" height="800"></canvas>
+    <button onclick="addMarker('AP', '#FF0000')">Add Access Point</button>
+    <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
+
+    <script>
+        const canvas = document.getElementById('floorplan');
+        const ctx = canvas.getContext('2d');
+        const markers = [];
+        const rooms = [
+            { x: 100, y: 150, width: 200, height: 100, label: 'D308' },
+            { x: 350, y: 150, width: 200, height: 100, label: 'D307' },
+            { x: 600, y: 150, width: 200, height: 100, label: 'D306' },
+            // More rooms can be added here
+        ];
+
+        function drawRooms() {
+            rooms.forEach(room => {
+                ctx.fillStyle = 'lightgrey';
+                ctx.fillRect(room.x, room.y, room.width, room.height);
+                ctx.strokeRect(room.x, room.y, room.width, room.height);
+                ctx.fillStyle = 'black';
+                ctx.fillText(room.label, room.x + 5, room.y + 20);
+            });
+        }
+
+        function addMarker(type, color) {
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            const marker = { x, y, type, color };
+            markers.push(marker);
+            drawMarker(marker);
+        }
+
+        function drawMarker(marker) {
+            ctx.fillStyle = marker.color;
+            ctx.beginPath();
+            ctx.arc(marker.x, marker.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.fillText(`(${marker.x.toFixed(1)}, ${marker.y.toFixed(1)})`, marker.x + 15, marker.y + 5);
+        }
+
+        function drawAllMarkers() {
+            markers.forEach(drawMarker);
+        }
+
+        canvas.addEventListener('mousedown', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            let dragging = false;
+            let selectedMarker = null;
+
+            markers.forEach(marker => {
+                const distance = Math.sqrt(Math.pow(marker.x - x, 2) + Math.pow(marker.y - y, 2));
+                if (distance < 10) {
+                    dragging = true;
+                    selectedMarker = marker;
+                }
+            });
+
+            function onMouseMove(e) {
+                if (dragging && selectedMarker) {
+                    const newX = e.clientX - rect.left;
+                    const newY = e.clientY - rect.top;
+                    selectedMarker.x = newX;
+                    selectedMarker.y = newY;
+                    redrawCanvas();
+                }
+            }
+
+            function onMouseUp() {
+                canvas.removeEventListener('mousemove', onMouseMove);
+                canvas.removeEventListener('mouseup', onMouseUp);
+                if (dragging) {
+                    redrawCanvas();
+                }
+            }
+
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+        });
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawRooms();
+            drawAllMarkers();
+        }
+
+        // Initial draw
+        drawRooms();
+        drawAllMarkers();
+
+    </script>
+</body>
+</html>
