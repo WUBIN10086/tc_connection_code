@@ -33,7 +33,7 @@ import datetime
 import time
 from throughput_estimation import calculate_throughput_estimate
 from concurrent_calc import calculate_srf
-
+from throughput_estimation import Calculate_throughput
 from write_to_output import write_to_file
 
 #---------------------------------------------------------------------
@@ -334,22 +334,6 @@ connection_num = len(all_matrices)
 # 阈值根据连接数量进行调整，假设一个Host大约上下浮动3Mbps左右
 impact_threshold = host_n * 3
 
-def categorize_throughput(data, threshold):
-    # 计算均值
-    mean_throughput = sum(data) / len(data)
-    cont = 0
-    # 遍历吞吐量数据
-    for value in data:
-        # 计算吞吐量与均值的差值
-        difference = abs(value - mean_throughput)
-        # 根据阈值判断类别
-        if difference <= threshold:
-            cont += 1
-        else:
-            cont -= 1
-    # 如果大部分（80%）的连接情况下，吞吐量相差不大，则优先考虑公平性指数
-    if cont >= connection_num * 0.8:
-        return True
 
 
 #---------------------------------------------------------------------
