@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
 # 定义距离计算函数
 def Distance(x1, y1, x2, y2):
@@ -36,7 +37,7 @@ x2, y2 = 3, 0
 d = Distance(x1, y1, x2, y2)
 
 # P1的取值范围
-P1_values = np.arange(-31, -75, -5)  # 从 -31 dBm 到 -80 dBm
+P1_values = np.arange(-31, -66, -1.5)  # 从 -31 dBm 到 -75 dBm
 
 # 计算每个P1下的吞吐量
 throughput_values = []
@@ -46,16 +47,23 @@ for P1 in P1_values:
     throughput = Calculate_throughput(a, b, c, RSS)
     throughput_values.append(throughput)
     mW_value = dBm_to_mW(P1)
-    P1_mW_labels.append(f"{P1} dBm / {mW_value:.2f} mW")
-    #P1_mW_labels.append(f"{mW_value:.2f} mW")
-    #P1_mW_labels.append(f"{P1} dBm ")
+    P1_mW_labels.append(f"{mW_value:.2f} ")
+    #P1_mW_labels.append(f"{P1} dBm / {mW_value:.2f} mW")
+# 计算吞吐量的一阶和二阶导数
+throughput_deriv1 = np.gradient(throughput_values, P1_values)
+throughput_deriv2 = np.gradient(throughput_deriv1, P1_values)
 
-# 绘制 P1 与吞吐量的关系图
+# 找到二阶导数的拐点
+peaks, _ = find_peaks(np.abs(throughput_deriv2))
+print([(P1_mW_labels[peak], throughput_values[peak]) for peak in peaks])
+
+# 绘制图形
 plt.figure(figsize=(20, 10))
-plt.plot(P1_mW_labels, throughput_values, marker='o')
-plt.title("Relationship between P1 and Throughput")
-plt.xlabel("P1 (dBm / mW)")
+plt.plot(P1_mW_labels, throughput_values, marker='o', label='Throughput')
+plt.plot([P1_mW_labels[peak] for peak in peaks], [throughput_values[peak] for peak in peaks], 'ro', label='Inflection Points')
+plt.title("Relationship between Transmission Power and Throughput")
+plt.xlabel("Transmission Power(mW)")
 plt.ylabel("Throughput")
 plt.grid(True)
-#plt.xticks(rotation=90)  #旋转标签以提高可读性
+plt.legend()
 plt.show()
