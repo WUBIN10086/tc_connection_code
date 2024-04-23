@@ -1,46 +1,61 @@
-import matplotlib.pyplot as plt
+import math
 import numpy as np
-from throughput_estimation import calculate_throughput_estimate, Calculate_throughput, Rss_calculate
+import matplotlib.pyplot as plt
 
-def plot_throughput_vs_signal_strength(parameters, host_coordinates, ap_coordinates, nk, max_distance):
-    distances = np.linspace(0, max_distance, 100)
-    signal_strengths = []
-    throughputs = []
+# 定义距离计算函数
+def Distance(x1, y1, x2, y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-    x1, y1 = host_coordinates
-    x2, y2 = ap_coordinates
+# 定义 RSS 计算函数
+def Rss_calculate(alpha, P_1, d, nk, Wk):
+    sum_nk_Wk = sum(nk_i * Wk_i for nk_i, Wk_i in zip(nk, Wk))
+    RSS = P_1 - 10 * alpha * math.log10(d) - sum_nk_Wk
+    return RSS
 
-    for distance in distances:
-        try:
-            adjusted_ap_coordinates = (x2, y2 + distance)
-            Pd = Rss_calculate(parameters['alpha'], parameters['P_1'], distance, nk, parameters['Wk'])
-            if isinstance(Pd, str):
-                continue  # 如果Pd是字符串（表示错误），跳过这个循环
-            Thr_estimation = Calculate_throughput(parameters['a'], parameters['b'], parameters['c'], Pd)
-            signal_strengths.append(Pd)
-            throughputs.append(Thr_estimation)
-        except Exception as e:
-            print(f"Error at distance {distance}: {e}")
-            continue
+# 定义吞吐量计算函数
+def Calculate_throughput(a, b, c, Pd):
+    exponent = -(120 + Pd - b) / c
+    throughput = a / (1 + math.exp(exponent))
+    return throughput
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(signal_strengths, throughputs, label='Throughput vs Signal Strength')
-    plt.xlabel('Signal Strength (dBm)')
-    plt.ylabel('Estimated Throughput (Mbps)')
-    plt.title('Throughput Estimation vs Signal Strength')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+# 定义 dBm 到 mW 的转换函数
+def dBm_to_mW(dBm):
+    return 10 ** ((dBm) / 10)*100000
 
-# 示例参数
-parameters = {
-    'alpha': 2.2,
-    'P_1': -28.9,
-    'a': 59.5,
-    'b': 62,
-    'c': 6.78,
-    'Wk': [7.21,6.9,3.4,4.7,2.11,2.5]
-}
+# 参数设置
+alpha = 2.15
+a = 133
+b = 58
+c = 6.3
+nk = [0]
+Wk = [0]
 
-# 使用示例
-plot_throughput_vs_signal_strength(parameters, (0, 0), (0, 0), [1, 1, 1, 1, 1, 1], 5)
+# 设备坐标
+x1, y1 = 0, 0
+x2, y2 = 3, 0
+d = Distance(x1, y1, x2, y2)
+
+# P1的取值范围
+P1_values = np.arange(-31, -75, -5)  # 从 -31 dBm 到 -80 dBm
+
+# 计算每个P1下的吞吐量
+throughput_values = []
+P1_mW_labels = []
+for P1 in P1_values:
+    RSS = Rss_calculate(alpha, P1, d, nk, Wk)
+    throughput = Calculate_throughput(a, b, c, RSS)
+    throughput_values.append(throughput)
+    mW_value = dBm_to_mW(P1)
+    P1_mW_labels.append(f"{P1} dBm / {mW_value:.2f} mW")
+    #P1_mW_labels.append(f"{mW_value:.2f} mW")
+    #P1_mW_labels.append(f"{P1} dBm ")
+
+# 绘制 P1 与吞吐量的关系图
+plt.figure(figsize=(20, 10))
+plt.plot(P1_mW_labels, throughput_values, marker='o')
+plt.title("Relationship between P1 and Throughput")
+plt.xlabel("P1 (dBm / mW)")
+plt.ylabel("Throughput")
+plt.grid(True)
+#plt.xticks(rotation=90)  #旋转标签以提高可读性
+plt.show()
