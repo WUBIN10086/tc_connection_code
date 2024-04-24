@@ -37,7 +37,7 @@ x2, y2 = 3, 0
 d = Distance(x1, y1, x2, y2)
 
 # P1的取值范围
-P1_values = np.arange(-31, -66, -1.5)  # 从 -31 dBm 到 -75 dBm
+P1_values = np.arange(-31, -67, -3)  # 从 -31 dBm 到 -75 dBm
 
 # 计算每个P1下的吞吐量
 throughput_values = []
@@ -57,13 +57,17 @@ throughput_deriv2 = np.gradient(throughput_deriv1, P1_values)
 peaks, _ = find_peaks(np.abs(throughput_deriv2))
 print([(P1_mW_labels[peak], throughput_values[peak]) for peak in peaks])
 
+plt.rcParams['font.size'] = 14  # 可以根据需要调整大小
+
 # 绘制图形
-plt.figure(figsize=(20, 10))
+plt.figure(figsize=(15, 6.5))
 plt.plot(P1_mW_labels, throughput_values, marker='o', label='Throughput')
 plt.plot([P1_mW_labels[peak] for peak in peaks], [throughput_values[peak] for peak in peaks], 'ro', label='Inflection Points')
-plt.title("Relationship between Transmission Power and Throughput")
-plt.xlabel("Transmission Power(mW)")
-plt.ylabel("Throughput")
+plt.title("Relationship between Transmission Power and Throughput", fontsize=25)  # 调整标题大小
+plt.xlabel("Transmission Power(mW)", fontsize=20)  # 调整x轴标签大小
+plt.ylabel("Throughput(Mbps)", fontsize=20)  # 调整y轴标签大小
 plt.grid(True)
-plt.legend()
+plt.legend(fontsize=20)  # 调整图例大小
+plt.xticks(fontsize=19.5)  # 调整x轴刻度大小
+plt.yticks(fontsize=20)  # 调整y轴刻度大小
 plt.show()
