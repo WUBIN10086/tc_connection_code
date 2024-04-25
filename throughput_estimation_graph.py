@@ -57,6 +57,17 @@ throughput_deriv2 = np.gradient(throughput_deriv1, P1_values)
 peaks, _ = find_peaks(np.abs(throughput_deriv2))
 print([(P1_mW_labels[peak], throughput_values[peak]) for peak in peaks])
 
+# 找到最大吞吐量对应的传输功率
+max_throughput_index = np.argmax(throughput_values)
+max_throughput_P1 = P1_values[max_throughput_index]
+max_throughput_mW = P1_mW_labels[max_throughput_index]
+
+# 重新计算最大吞吐量对应的 RSS 和吞吐量
+max_throughput_RSS = Rss_calculate(alpha, max_throughput_P1, d, nk, Wk)
+max_throughput = Calculate_throughput(a, b, c, max_throughput_RSS)
+
+print("Max Throughput at Max Transmission:{:.2f}".format(max_throughput))
+
 plt.rcParams['font.size'] = 14  # 可以根据需要调整大小
 
 # 绘制图形
