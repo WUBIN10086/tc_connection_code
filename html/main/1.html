@@ -6,21 +6,24 @@
     <title>Interactive Floor Plan</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            height: 100vh;
-            background-color: #f0f0f0;
+            display: flex; /* 设置为弹性盒模型 */
+            flex-direction: column; /* 主轴为垂直方向 */
+            align-items: center; /* 交叉轴居中对齐 */
+            margin: 0; /* 去除默认边距 */
+            height: 100vh; /* 高度设置为视口高度 */
+            background-color: #f0f0f0; /* 背景颜色 */
         }
         #floorplan {
-            border: 1px solid #ccc;
+            border: 2px solid #000000; /* 为画布添加边框 */
+            /* width: 95vw;
+            height: 80vh; */
+            /* margin: 2%; */
         }
         button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
+            margin-top: 10px; /* 按钮上边距 */
+            padding: 10px 20px; /* 按钮内填充 */
+            font-size: 16px; /* 文字大小 */
+            cursor: pointer; /* 鼠标悬停时显示手型光标 */
         }
     </style>
 </head>
@@ -30,57 +33,174 @@
     <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
 
     <script>
-        const canvas = document.getElementById('floorplan');
-        const ctx = canvas.getContext('2d');
-        const markers = [];
-        const rooms = [
-            { x: 100, y: 150, width: 200, height: 100, label: 'D308' },
-            { x: 350, y: 150, width: 200, height: 100, label: 'D307' },
-            { x: 600, y: 150, width: 200, height: 100, label: 'D306' },
-            // More rooms can be added here
+        const canvas = document.getElementById('floorplan'); // 获取canvas元素
+        const ctx = canvas.getContext('2d'); // 获取2D渲染上下文
+        const markers = []; // 存储标记的数组
+        const rooms = [ // 定义房间数据
+            { x: 50, y: 20, width: 90, height: 160, label: 'D308' },
+            { x: 140, y: 20, width: 180, height: 160, label: 'D307' },
+            { x: 320, y: 20, width: 180, height: 160, label: 'D306' },
+            { x: 500, y: 20, width: 180, height: 160, label: 'D305' },
+            { x: 680, y: 20, width: 90, height: 160, label: 'D303' },
+            { x: 770, y: 20, width: 90, height: 160, label: 'D301' },
+            { x: 50, y: 180, width: 810, height: 62.5, label: 'corridor' },
+            { x: 50, y: 242.5, width: 90, height: 160, label: 'stairs' },
+            { x: 140, y: 242.5, width: 180, height: 160, label: 'Refresh Corner' },
+            { x: 320, y: 242.5, width: 90, height: 160, label: 'Toilet-Male' },
+            { x: 410, y: 242.5, width: 90, height: 160, label: 'Toilet-Female' },
+            { x: 500, y: 242.5, width: 180, height: 160, label: 'D304' },
+            { x: 680, y: 242.5, width: 180, height: 160, label: 'D302' },
+        ];
+        const walls = [ // 定义墙面数据
+            { x: 50, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 140, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 320, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 500, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 680, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 770, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 500, y: 237.5, width: 360, height: 10, label: 'corridor wall'},
+            { x: 320, y: 237.5, width: 40, height: 10, label: 'corridor wall'},
+            { x: 410, y: 237.5, width: 40, height: 10, label: 'corridor wall'},
+            { x: 100, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 260, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 440, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 620, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 730, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 820, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 620, y: 237.5, width: 60, height: 10, label: 'doors'},
+            { x: 800, y: 237.5, width: 60, height: 10, label: 'doors'},
+            { x: 220, y: 237.5, width: 100, height: 10, label: 'glass wall'},
+            { x: 135, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 315, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 495, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 675, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 765, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 495, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 405, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 315, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 135, y: 242.5, width: 10, height: 160, label: 'partition wall'},
+            { x: 675, y: 247.5, width: 10, height: 155, label: 'partition wall'}
         ];
 
-        function drawRooms() {
+
+        // 计算整体布局偏移以居中
+        function calculateOffset() {
+            let minX = Infinity, maxX = 0, minY = Infinity, maxY = 0;
+
+            const allElements = rooms.concat(walls); // 将房间和墙面合并处理
+            allElements.forEach(el => {
+                minX = Math.min(minX, el.x);
+                maxX = Math.max(maxX, el.x + el.width);
+                minY = Math.min(minY, el.y);
+                maxY = Math.max(maxY, el.y + el.height);
+            });
+
+            const layoutWidth = maxX - minX;
+            const layoutHeight = maxY - minY;
+            const offsetX = (canvas.width - layoutWidth) / 2 - minX;
+            const offsetY = (canvas.height - layoutHeight) / 2 - minY;
+
+            return { offsetX, offsetY };
+        }
+
+        // 绘制所有房间
+        function drawRooms(offsetX, offsetY) {
             rooms.forEach(room => {
-                ctx.fillStyle = 'lightgrey';
-                ctx.fillRect(room.x, room.y, room.width, room.height);
-                ctx.strokeRect(room.x, room.y, room.width, room.height);
-                ctx.fillStyle = 'black';
-                ctx.fillText(room.label, room.x + 5, room.y + 20);
+                    // 根据房间类型选择颜色
+                switch (room.label) {
+                    case 'Toilet-Male':
+                        ctx.fillStyle = '#1E90FF'; // 浅蓝色
+                        break;
+                    case 'Toilet-Female':
+                        ctx.fillStyle = '#C71585'
+                        break;
+                    case 'Refresh Corner':
+                        ctx.fillStyle = '#90ee90'; // 浅绿色
+                        break;
+                    case 'stairs':
+                        ctx.fillStyle = '#F0F8FF'; // 浅粉色
+                        break;
+                    case 'corridor':
+                        ctx.fillStyle = '#ffffe0'; // 浅黄色
+                        break;
+                    default:
+                        ctx.fillStyle = '#add8e6'; // 默认灰色
+                        break;
+                }
+                ctx.fillRect(room.x + offsetX, room.y + offsetY, room.width, room.height);
+                ctx.strokeRect(room.x + offsetX, room.y + offsetY, room.width, room.height);
+                ctx.fillStyle = 'black'; // 文本颜色
+                ctx.fillText(room.label, room.x + offsetX + 5, room.y + offsetY + 20);
+            });
+        }
+        function drawWalls(offsetX, offsetY) {
+            walls.forEach(wall => {
+                switch (wall.label) {
+                    case 'corridor wall':
+                        ctx.fillStyle = 'rgba(211, 211, 211, 0.8)';
+                        break;
+                    case 'partition wall':
+                        ctx.fillStyle = 'rgba(170, 170, 255, 0.8)';
+                        break;
+                    case 'doors':
+                        ctx.fillStyle = 'rgba(255, 165, 0, 0.8)';
+                        break;
+                    case 'glass wall':
+                        ctx.fillStyle = 'rgba(28,221,255,0.8)';
+                        break;
+                    default:
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        break;
+                }
+                ctx.fillRect(wall.x + offsetX, wall.y + offsetY, wall.width, wall.height);
             });
         }
 
+        // 添加标记
         function addMarker(type, color) {
+            const { offsetX, offsetY } = calculateOffset();
+            const originX = 50 + offsetX;
+            const originY = 402.5 + offsetY;
             const x = Math.random() * (canvas.width - 100) + 50;
             const y = Math.random() * (canvas.height - 100) + 50;
-            const marker = { x, y, type, color };
+            const relativeX = x - originX; // 计算相对于自定义原点的X坐标
+            const relativeY = y - originY; // 计算相对于自定义原点的Y坐标
+            const marker = { x, y, type, color, relativeX, relativeY };
             markers.push(marker);
             drawMarker(marker);
         }
 
+        // 绘制单个标记
         function drawMarker(marker) {
             ctx.fillStyle = marker.color;
             ctx.beginPath();
-            ctx.arc(marker.x, marker.y, 10, 0, Math.PI * 2);
+            ctx.arc(marker.x, marker.y, 5, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
             ctx.fillStyle = 'black';
-            ctx.fillText(`(${marker.x.toFixed(1)}, ${marker.y.toFixed(1)})`, marker.x + 15, marker.y + 5);
+            // 显示相对于自定义原点的坐标
+            ctx.fillText(`(${marker.relativeX.toFixed(1)}, ${marker.relativeY.toFixed(1)})`, marker.x + 15, marker.y + 5);
         }
 
+        // 绘制所有标记
         function drawAllMarkers() {
             markers.forEach(drawMarker);
         }
 
+        // 处理鼠标按下事件，用于拖动标记
         canvas.addEventListener('mousedown', function(e) {
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const { offsetX, offsetY } = calculateOffset(); // 确保使用最新的偏移量
+            const originX = 50 + offsetX;
+            const originY = 402.5 + offsetY;
+
             let dragging = false;
             let selectedMarker = null;
 
             markers.forEach(marker => {
-                const distance = Math.sqrt(Math.pow(marker.x - x, 2) + Math.pow(marker.y - y, 2));
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const distance = Math.sqrt(Math.pow(marker.x - mouseX, 2) + Math.pow(marker.y - mouseY, 2));
                 if (distance < 10) {
                     dragging = true;
                     selectedMarker = marker;
@@ -93,32 +213,41 @@
                     const newY = e.clientY - rect.top;
                     selectedMarker.x = newX;
                     selectedMarker.y = newY;
-                    redrawCanvas();
+                    // 更新相对坐标
+                    selectedMarker.relativeX = newX - originX;
+                    selectedMarker.relativeY = newY - originY;
+                    redrawCanvas(); // 重绘画布以更新标记位置和坐标
                 }
             }
 
             function onMouseUp() {
                 canvas.removeEventListener('mousemove', onMouseMove);
                 canvas.removeEventListener('mouseup', onMouseUp);
-                if (dragging) {
-                    redrawCanvas();
-                }
+                dragging = false;
             }
 
             canvas.addEventListener('mousemove', onMouseMove);
             canvas.addEventListener('mouseup', onMouseUp);
         });
 
+
+        // 重绘画布
         function redrawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawRooms();
-            drawAllMarkers();
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            drawAllMarkers(); // 重新绘制标记
         }
 
-        // Initial draw
-        drawRooms();
-        drawAllMarkers();
-
+        // 初始绘制
+        function init() {
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            drawAllMarkers(); // 初始绘制标记
+        }
+        window.onload = init; // 页面加载完成后执行初始化绘制
     </script>
 </body>
 </html>
