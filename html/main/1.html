@@ -19,23 +19,51 @@
             height: 80vh; */
             /* margin: 2%; */
         }
+        #controls {
+            display: flex; /* 设置为弹性布局，横向排列 */
+            justify-content: center; /* 水平居中 */
+            width: 100%; /* 控制面板宽度与视口宽度相同 */
+            margin-top: 10px; /* 与画布间隔一定距离 */
+
+        }
         button {
             margin-top: 10px; /* 按钮上边距 */
             padding: 10px 20px; /* 按钮内填充 */
+            margin-right: 10px; /* 为每个元素添加右侧间距 */
             font-size: 16px; /* 文字大小 */
             cursor: pointer; /* 鼠标悬停时显示手型光标 */
+        }
+        input {
+            padding: 10px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        #Title {
+            font-size: 32px; /* 大小调整 */
+            color: #2c3e50; /* 深蓝色 */
+            text-shadow: 1px 1px 2px #8e44ad; /* 紫色阴影 */
+            font-family: 'Arial', sans-serif; /* 使用通用字体 */
+            margin: 20px 0; /* 增加上下间距 */
+            text-align: center; /* 居中对齐 */
         }
     </style>
 </head>
 <body>
-    <canvas id="floorplan" width="1200" height="800"></canvas>
-    <button onclick="addMarker('AP', '#FF0000')">Add Access Point</button>
-    <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
+    <h1 id="Title">Indoor Location Plan</h1>
+    <canvas id="floorplan" width="900" height="450"></canvas>
+    <div id="controls">
+        <input type="text" id="markerName" placeholder="Enter name for marker" />
+        <button onclick="addMarker('AP', '#FF0000')">Add Access Point</button>
+        <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
+        <button onclick="removeSelectedMarker()">Remove Selected Marker</button>
+    </div>
 
     <script>
         const canvas = document.getElementById('floorplan'); // 获取canvas元素
         const ctx = canvas.getContext('2d'); // 获取2D渲染上下文
         const markers = []; // 存储标记的数组
+        let selectedMarker = null;
+
         const rooms = [ // 定义房间数据
             { x: 50, y: 20, width: 90, height: 160, label: 'D308' },
             { x: 140, y: 20, width: 180, height: 160, label: 'D307' },
@@ -100,6 +128,7 @@
             const offsetX = (canvas.width - layoutWidth) / 2 - minX;
             const offsetY = (canvas.height - layoutHeight) / 2 - minY;
 
+
             return { offsetX, offsetY };
         }
 
@@ -158,28 +187,74 @@
 
         // 添加标记
         function addMarker(type, color) {
+            const name = document.getElementById('markerName').value.trim();
+            if (!name) {
+                alert('Please enter a name for the marker.');
+                return;
+            }
+
             const { offsetX, offsetY } = calculateOffset();
             const originX = 50 + offsetX;
-            const originY = 402.5 + offsetY;
+            const originY = 20 + offsetY;
             const x = Math.random() * (canvas.width - 100) + 50;
             const y = Math.random() * (canvas.height - 100) + 50;
-            const relativeX = x - originX; // 计算相对于自定义原点的X坐标
-            const relativeY = y - originY; // 计算相对于自定义原点的Y坐标
-            const marker = { x, y, type, color, relativeX, relativeY };
+            const relativeX = (x - originX) *0.04; // 计算相对于自定义原点的X坐标
+            const relativeY = (y - originY) *0.04; // 计算相对于自定义原点的Y坐标
+            const marker = {
+                x, y, type, color, name,
+                selected: false,
+                relativeX,
+                relativeY
+            };
             markers.push(marker);
-            drawMarker(marker);
+            redrawCanvas();
         }
 
         // 绘制单个标记
         function drawMarker(marker) {
-            ctx.fillStyle = marker.color;
-            ctx.beginPath();
-            ctx.arc(marker.x, marker.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            if (marker.type === 'AP') {
+                // 绘制一个三角形用作AP的标记
+                const sideLength = 15;  // 三角形边长
+                const height = sideLength * Math.sqrt(3) / 2;  // 计算等边三角形的高
+
+                ctx.beginPath();
+                ctx.moveTo(marker.x, marker.y - height / 2);  // 顶点
+                ctx.lineTo(marker.x - sideLength / 2, marker.y + height / 2);  // 左下角
+                ctx.lineTo(marker.x + sideLength / 2, marker.y + height / 2);  // 右下角
+                ctx.closePath();
+                ctx.fillStyle = marker.selected ? 'yellow' : marker.color;  // 选择颜色
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // 绘制一个圆形用作Host的标记
+                ctx.fillStyle = marker.selected ? 'yellow' : marker.color;
+                ctx.beginPath();
+                ctx.arc(marker.x, marker.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
             ctx.fillStyle = 'black';
-            // 显示相对于自定义原点的坐标
-            ctx.fillText(`(${marker.relativeX.toFixed(1)}, ${marker.relativeY.toFixed(1)})`, marker.x + 15, marker.y + 5);
+            ctx.fillText(`${marker.name} (${marker.relativeX.toFixed(1)}, ${marker.relativeY.toFixed(1)})`, marker.x + 15, marker.y + 5);
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            markers.forEach(drawMarker); // 重新绘制标记
+            updateInfoPanel(); // 更新信息面板
+        }
+
+        // 加入信息栏
+        function updateInfoPanel() {
+            const infoPanel = document.getElementById('infoPanel');
+            infoPanel.innerHTML = ''; // 清空旧的内容
+            markers.forEach(marker => {
+                const name = document.createElement('div');
+                name.textContent = `${marker.name} (${marker.x.toFixed(1)}, ${marker.y.toFixed(1)})`;
+                infoPanel.appendChild(name); // 添加新的内容
+            });
         }
 
         // 绘制所有标记
@@ -187,35 +262,59 @@
             markers.forEach(drawMarker);
         }
 
-        // 处理鼠标按下事件，用于拖动标记
+        // 处理鼠标按下事件，用于选择和拖动标记
         canvas.addEventListener('mousedown', function(e) {
             const rect = canvas.getBoundingClientRect();
-            const { offsetX, offsetY } = calculateOffset(); // 确保使用最新的偏移量
+            const { offsetX, offsetY } = calculateOffset();
             const originX = 50 + offsetX;
-            const originY = 402.5 + offsetY;
+            const originY = 20 + offsetY;
 
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
             let dragging = false;
-            let selectedMarker = null;
+            let found = false;
 
+            // 先检查是否重新点击已选中的标记来取消选择
             markers.forEach(marker => {
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                const distance = Math.sqrt(Math.pow(marker.x - mouseX, 2) + Math.pow(marker.y - mouseY, 2));
-                if (distance < 10) {
-                    dragging = true;
-                    selectedMarker = marker;
+                if (marker.selected) {
+                    const distance = Math.sqrt((marker.x - mouseX) ** 2 + (marker.y - mouseY) ** 2);
+                    if (distance < 15) {
+                        marker.selected = false;
+                        found = true;
+                        redrawCanvas();
+                        return; // 结束函数执行
+                    }
                 }
             });
 
+            if (!found) { // 没有重新点击已选中的标记，则处理新的选择或拖动
+                markers.forEach(marker => {
+                    const distance = Math.sqrt((marker.x - mouseX) ** 2 + (marker.y - mouseY) ** 2);
+                    if (distance < 15) {
+                        if (!dragging) { // 选中第一个接近的标记进行拖动
+                            dragging = true;
+                            selectedMarker = marker;
+                            marker.selected = true;
+                        }
+                    } else {
+                        marker.selected = false;
+                    }
+                });
+            }
+
+            if (dragging || found) {
+                redrawCanvas(); // 重绘以更新选中状态或取消选中
+            }
+
+            // 拖动选中的标记
             function onMouseMove(e) {
                 if (dragging && selectedMarker) {
                     const newX = e.clientX - rect.left;
                     const newY = e.clientY - rect.top;
                     selectedMarker.x = newX;
                     selectedMarker.y = newY;
-                    // 更新相对坐标
-                    selectedMarker.relativeX = newX - originX;
-                    selectedMarker.relativeY = newY - originY;
+                    selectedMarker.relativeX = (newX - originX) * 0.04; // 更新相对坐标
+                    selectedMarker.relativeY = (newY - originY) * 0.04;
                     redrawCanvas(); // 重绘画布以更新标记位置和坐标
                 }
             }
@@ -230,6 +329,12 @@
             canvas.addEventListener('mouseup', onMouseUp);
         });
 
+        function removeSelectedMarker() {
+            const remainingMarkers = markers.filter(marker => !marker.selected);
+            markers.length = 0; // Clear the original array
+            markers.push(...remainingMarkers);
+            redrawCanvas();
+        }
 
         // 重绘画布
         function redrawCanvas() {
