@@ -49,6 +49,7 @@
     </style>
 </head>
 <body>
+    <li><a href="index.html">Back to HomePage</a></li>
     <h1 id="Title">Indoor Location Plan</h1>
     <canvas id="floorplan" width="900" height="450"></canvas>
     <div id="controls">
@@ -56,6 +57,8 @@
         <button onclick="addMarker('AP', '#FF0000')">Add Access Point</button>
         <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
         <button onclick="removeSelectedMarker()">Remove Selected Marker</button>
+        <button onclick="setDualInterfaces()">Dual Interfaces</button>
+        <button onclick="exportMarkersAsCSV()">Export CSV</button>
     </div>
 
     <script>
@@ -110,6 +113,48 @@
             { x: 675, y: 247.5, width: 10, height: 155, label: 'partition wall'}
         ];
 
+        // Add the setDualInterfaces function to the script
+        function setDualInterfaces() {
+            if (selectedMarker && !selectedMarker.isDual) {
+                selectedMarker.isDual = true;
+                alert(selectedMarker.name + " is now set as Dual Interfaces.");
+            } else if (selectedMarker && selectedMarker.isDual) {
+                alert(selectedMarker.name + " is already set as Dual Interfaces.");
+            } else {
+                alert("No marker selected.");
+            }
+            redrawCanvas(); // Optional, for visual feedback if needed
+        }
+
+        // 输出CSV文件
+        function exportMarkersAsCSV() {
+            const csvRows = ['Name,X,Y,Type']; // CSV header
+            markers.forEach(marker => {
+                if (marker.isDual) {
+                    const csvEntry1 = `${marker.name}_1,${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    const csvEntry2 = `${marker.name}_2,${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    csvRows.push(csvEntry1);
+                    csvRows.push(csvEntry2);
+                } else {
+                    const csvEntry = `${marker.name},${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    csvRows.push(csvEntry);
+                }
+            });
+            const csvContent = csvRows.join('\n');
+            downloadCSV(csvContent);
+        }
+
+        function downloadCSV(csvContent) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Eng_Location.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // 计算整体布局偏移以居中
         function calculateOffset() {
@@ -243,19 +288,8 @@
             drawRooms(offsetX, offsetY); // 绘制房间
             drawWalls(offsetX, offsetY); // 绘制墙面
             markers.forEach(drawMarker); // 重新绘制标记
-            updateInfoPanel(); // 更新信息面板
         }
 
-        // 加入信息栏
-        function updateInfoPanel() {
-            const infoPanel = document.getElementById('infoPanel');
-            infoPanel.innerHTML = ''; // 清空旧的内容
-            markers.forEach(marker => {
-                const name = document.createElement('div');
-                name.textContent = `${marker.name} (${marker.x.toFixed(1)}, ${marker.y.toFixed(1)})`;
-                infoPanel.appendChild(name); // 添加新的内容
-            });
-        }
 
         // 绘制所有标记
         function drawAllMarkers() {

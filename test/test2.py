@@ -1,5 +1,5 @@
 import csv
-from throughput_estimation import calculate_throughput_estimate
+from main.src.throughput_estimation import calculate_throughput_estimate
 
 # 创建两个空数组用于存储AP和Host的坐标
 ap_coordinates = []

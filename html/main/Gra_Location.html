@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Floor Plan</title>
+    <style>
+        body {
+            display: flex; /* 设置为弹性盒模型 */
+            flex-direction: column; /* 主轴为垂直方向 */
+            align-items: center; /* 交叉轴居中对齐 */
+            margin: 0; /* 去除默认边距 */
+            height: 100vh; /* 高度设置为视口高度 */
+            background-color: #f0f0f0; /* 背景颜色 */
+        }
+        #floorplan {
+            border: 2px solid #000000; /* 为画布添加边框 */
+            /* width: 95vw;
+            height: 80vh; */
+            /* margin: 2%; */
+        }
+        #controls {
+            display: flex; /* 设置为弹性布局，横向排列 */
+            justify-content: center; /* 水平居中 */
+            width: 100%; /* 控制面板宽度与视口宽度相同 */
+            margin-top: 10px; /* 与画布间隔一定距离 */
+
+        }
+        button {
+            margin-top: 10px; /* 按钮上边距 */
+            padding: 10px 20px; /* 按钮内填充 */
+            margin-right: 10px; /* 为每个元素添加右侧间距 */
+            font-size: 16px; /* 文字大小 */
+            cursor: pointer; /* 鼠标悬停时显示手型光标 */
+        }
+        input {
+            padding: 10px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        #Title {
+            font-size: 32px; /* 大小调整 */
+            color: #2c3e50; /* 深蓝色 */
+            text-shadow: 1px 1px 2px #8e44ad; /* 紫色阴影 */
+            font-family: 'Arial', sans-serif; /* 使用通用字体 */
+            margin: 20px 0; /* 增加上下间距 */
+            text-align: center; /* 居中对齐 */
+        }
+    </style>
+</head>
+<body>
+    <li><a href="index.html">Back to HomePage</a></li>
+    <h1 id="Title">Indoor Location Plan</h1>
+    <canvas id="floorplan" width="900" height="450"></canvas>
+    <div id="controls">
+        <input type="text" id="markerName" placeholder="Enter name for marker" />
+        <button onclick="addMarker('AP', '#FF0000')">Add Access Point</button>
+        <button onclick="addMarker('Host', '#0000FF')">Add Host</button>
+        <button onclick="removeSelectedMarker()">Remove Selected Marker</button>
+        <button onclick="setDualInterfaces()">Dual Interfaces</button>
+        <button onclick="exportMarkersAsCSV()">Export CSV</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('floorplan'); // 获取canvas元素
+        const ctx = canvas.getContext('2d'); // 获取2D渲染上下文
+        const markers = []; // 存储标记的数组
+        let selectedMarker = null;
+
+        const rooms = [ // 定义房间数据
+            { x: 50, y: 20, width: 90, height: 160, label: 'D308' },
+            { x: 140, y: 20, width: 180, height: 160, label: 'D307' },
+            { x: 320, y: 20, width: 180, height: 160, label: 'D306' },
+            { x: 500, y: 20, width: 180, height: 160, label: 'D305' },
+            { x: 680, y: 20, width: 90, height: 160, label: 'D303' },
+            { x: 770, y: 20, width: 90, height: 160, label: 'D301' },
+            { x: 50, y: 180, width: 810, height: 62.5, label: 'corridor' },
+            { x: 50, y: 242.5, width: 90, height: 160, label: 'stairs' },
+            { x: 140, y: 242.5, width: 180, height: 160, label: 'Refresh Corner' },
+            { x: 320, y: 242.5, width: 90, height: 160, label: 'Toilet-Male' },
+            { x: 410, y: 242.5, width: 90, height: 160, label: 'Toilet-Female' },
+            { x: 500, y: 242.5, width: 180, height: 160, label: 'D304' },
+            { x: 680, y: 242.5, width: 180, height: 160, label: 'D302' },
+        ];
+        const walls = [ // 定义墙面数据
+            { x: 50, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 140, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 320, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 500, y: 175, width: 180, height: 10, label: 'corridor wall'},
+            { x: 680, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 770, y: 175, width: 90, height: 10, label: 'corridor wall'},
+            { x: 500, y: 237.5, width: 360, height: 10, label: 'corridor wall'},
+            { x: 320, y: 237.5, width: 40, height: 10, label: 'corridor wall'},
+            { x: 410, y: 237.5, width: 40, height: 10, label: 'corridor wall'},
+            { x: 100, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 260, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 440, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 620, y: 175, width: 60, height: 10, label: 'doors'},
+            { x: 730, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 820, y: 175, width: 40, height: 10, label: 'doors'},
+            { x: 620, y: 237.5, width: 60, height: 10, label: 'doors'},
+            { x: 800, y: 237.5, width: 60, height: 10, label: 'doors'},
+            { x: 220, y: 237.5, width: 100, height: 10, label: 'glass wall'},
+            { x: 135, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 315, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 495, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 675, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 765, y: 20, width: 10, height: 155, label: 'partition wall'},
+            { x: 495, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 405, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 315, y: 247.5, width: 10, height: 155, label: 'partition wall'},
+            { x: 135, y: 242.5, width: 10, height: 160, label: 'partition wall'},
+            { x: 675, y: 247.5, width: 10, height: 155, label: 'partition wall'}
+        ];
+
+        // Add the setDualInterfaces function to the script
+        function setDualInterfaces() {
+            if (selectedMarker && !selectedMarker.isDual) {
+                selectedMarker.isDual = true;
+                alert(selectedMarker.name + " is now set as Dual Interfaces.");
+            } else if (selectedMarker && selectedMarker.isDual) {
+                alert(selectedMarker.name + " is already set as Dual Interfaces.");
+            } else {
+                alert("No marker selected.");
+            }
+            redrawCanvas(); // Optional, for visual feedback if needed
+        }
+
+        // 输出CSV文件
+        function exportMarkersAsCSV() {
+            const csvRows = ['Name,X,Y,Type']; // CSV header
+            markers.forEach(marker => {
+                if (marker.isDual) {
+                    const csvEntry1 = `${marker.name}_1,${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    const csvEntry2 = `${marker.name}_2,${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    csvRows.push(csvEntry1);
+                    csvRows.push(csvEntry2);
+                } else {
+                    const csvEntry = `${marker.name},${marker.relativeX.toFixed(1)},${marker.relativeY.toFixed(1)},${marker.type}`;
+                    csvRows.push(csvEntry);
+                }
+            });
+            const csvContent = csvRows.join('\n');
+            downloadCSV(csvContent);
+        }
+
+        function downloadCSV(csvContent) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Eng_Location.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 计算整体布局偏移以居中
+        function calculateOffset() {
+            let minX = Infinity, maxX = 0, minY = Infinity, maxY = 0;
+
+            const allElements = rooms.concat(walls); // 将房间和墙面合并处理
+            allElements.forEach(el => {
+                minX = Math.min(minX, el.x);
+                maxX = Math.max(maxX, el.x + el.width);
+                minY = Math.min(minY, el.y);
+                maxY = Math.max(maxY, el.y + el.height);
+            });
+
+            const layoutWidth = maxX - minX;
+            const layoutHeight = maxY - minY;
+            const offsetX = (canvas.width - layoutWidth) / 2 - minX;
+            const offsetY = (canvas.height - layoutHeight) / 2 - minY;
+
+
+            return { offsetX, offsetY };
+        }
+
+        // 绘制所有房间
+        function drawRooms(offsetX, offsetY) {
+            rooms.forEach(room => {
+                    // 根据房间类型选择颜色
+                switch (room.label) {
+                    case 'Toilet-Male':
+                        ctx.fillStyle = '#1E90FF'; // 浅蓝色
+                        break;
+                    case 'Toilet-Female':
+                        ctx.fillStyle = '#C71585'
+                        break;
+                    case 'Refresh Corner':
+                        ctx.fillStyle = '#90ee90'; // 浅绿色
+                        break;
+                    case 'stairs':
+                        ctx.fillStyle = '#F0F8FF'; // 浅粉色
+                        break;
+                    case 'corridor':
+                        ctx.fillStyle = '#ffffe0'; // 浅黄色
+                        break;
+                    default:
+                        ctx.fillStyle = '#add8e6'; // 默认灰色
+                        break;
+                }
+                ctx.fillRect(room.x + offsetX, room.y + offsetY, room.width, room.height);
+                ctx.strokeRect(room.x + offsetX, room.y + offsetY, room.width, room.height);
+                ctx.fillStyle = 'black'; // 文本颜色
+                ctx.fillText(room.label, room.x + offsetX + 5, room.y + offsetY + 20);
+            });
+        }
+        function drawWalls(offsetX, offsetY) {
+            walls.forEach(wall => {
+                switch (wall.label) {
+                    case 'corridor wall':
+                        ctx.fillStyle = 'rgba(211, 211, 211, 0.8)';
+                        break;
+                    case 'partition wall':
+                        ctx.fillStyle = 'rgba(170, 170, 255, 0.8)';
+                        break;
+                    case 'doors':
+                        ctx.fillStyle = 'rgba(255, 165, 0, 0.8)';
+                        break;
+                    case 'glass wall':
+                        ctx.fillStyle = 'rgba(28,221,255,0.8)';
+                        break;
+                    default:
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        break;
+                }
+                ctx.fillRect(wall.x + offsetX, wall.y + offsetY, wall.width, wall.height);
+            });
+        }
+
+        // 添加标记
+        function addMarker(type, color) {
+            const name = document.getElementById('markerName').value.trim();
+            if (!name) {
+                alert('Please enter a name for the marker.');
+                return;
+            }
+
+            const { offsetX, offsetY } = calculateOffset();
+            const originX = 50 + offsetX;
+            const originY = 20 + offsetY;
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            const relativeX = (x - originX) *0.04; // 计算相对于自定义原点的X坐标
+            const relativeY = (y - originY) *0.04; // 计算相对于自定义原点的Y坐标
+            const marker = {
+                x, y, type, color, name,
+                selected: false,
+                relativeX,
+                relativeY
+            };
+            markers.push(marker);
+            redrawCanvas();
+        }
+
+        // 绘制单个标记
+        function drawMarker(marker) {
+            if (marker.type === 'AP') {
+                // 绘制一个三角形用作AP的标记
+                const sideLength = 15;  // 三角形边长
+                const height = sideLength * Math.sqrt(3) / 2;  // 计算等边三角形的高
+
+                ctx.beginPath();
+                ctx.moveTo(marker.x, marker.y - height / 2);  // 顶点
+                ctx.lineTo(marker.x - sideLength / 2, marker.y + height / 2);  // 左下角
+                ctx.lineTo(marker.x + sideLength / 2, marker.y + height / 2);  // 右下角
+                ctx.closePath();
+                ctx.fillStyle = marker.selected ? 'yellow' : marker.color;  // 选择颜色
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // 绘制一个圆形用作Host的标记
+                ctx.fillStyle = marker.selected ? 'yellow' : marker.color;
+                ctx.beginPath();
+                ctx.arc(marker.x, marker.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+            ctx.fillStyle = 'black';
+            ctx.fillText(`${marker.name} (${marker.relativeX.toFixed(1)}, ${marker.relativeY.toFixed(1)})`, marker.x + 15, marker.y + 5);
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            markers.forEach(drawMarker); // 重新绘制标记
+        }
+
+
+        // 绘制所有标记
+        function drawAllMarkers() {
+            markers.forEach(drawMarker);
+        }
+
+        // 处理鼠标按下事件，用于选择和拖动标记
+        canvas.addEventListener('mousedown', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const { offsetX, offsetY } = calculateOffset();
+            const originX = 50 + offsetX;
+            const originY = 20 + offsetY;
+
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            let dragging = false;
+            let found = false;
+
+            // 先检查是否重新点击已选中的标记来取消选择
+            markers.forEach(marker => {
+                if (marker.selected) {
+                    const distance = Math.sqrt((marker.x - mouseX) ** 2 + (marker.y - mouseY) ** 2);
+                    if (distance < 15) {
+                        marker.selected = false;
+                        found = true;
+                        redrawCanvas();
+                        return; // 结束函数执行
+                    }
+                }
+            });
+
+            if (!found) { // 没有重新点击已选中的标记，则处理新的选择或拖动
+                markers.forEach(marker => {
+                    const distance = Math.sqrt((marker.x - mouseX) ** 2 + (marker.y - mouseY) ** 2);
+                    if (distance < 15) {
+                        if (!dragging) { // 选中第一个接近的标记进行拖动
+                            dragging = true;
+                            selectedMarker = marker;
+                            marker.selected = true;
+                        }
+                    } else {
+                        marker.selected = false;
+                    }
+                });
+            }
+
+            if (dragging || found) {
+                redrawCanvas(); // 重绘以更新选中状态或取消选中
+            }
+
+            // 拖动选中的标记
+            function onMouseMove(e) {
+                if (dragging && selectedMarker) {
+                    const newX = e.clientX - rect.left;
+                    const newY = e.clientY - rect.top;
+                    selectedMarker.x = newX;
+                    selectedMarker.y = newY;
+                    selectedMarker.relativeX = (newX - originX) * 0.04; // 更新相对坐标
+                    selectedMarker.relativeY = (newY - originY) * 0.04;
+                    redrawCanvas(); // 重绘画布以更新标记位置和坐标
+                }
+            }
+
+            function onMouseUp() {
+                canvas.removeEventListener('mousemove', onMouseMove);
+                canvas.removeEventListener('mouseup', onMouseUp);
+                dragging = false;
+            }
+
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+        });
+
+        function removeSelectedMarker() {
+            const remainingMarkers = markers.filter(marker => !marker.selected);
+            markers.length = 0; // Clear the original array
+            markers.push(...remainingMarkers);
+            redrawCanvas();
+        }
+
+        // 重绘画布
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            drawAllMarkers(); // 重新绘制标记
+        }
+
+        // 初始绘制
+        function init() {
+            const { offsetX, offsetY } = calculateOffset(); // 计算居中偏移量
+            drawRooms(offsetX, offsetY); // 绘制房间
+            drawWalls(offsetX, offsetY); // 绘制墙面
+            drawAllMarkers(); // 初始绘制标记
+        }
+        window.onload = init; // 页面加载完成后执行初始化绘制
+    </script>
+</body>
+</html>
