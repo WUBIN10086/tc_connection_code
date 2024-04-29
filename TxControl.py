@@ -193,64 +193,69 @@ results = [[0.0] * num_aps for _ in range(num_hosts)]
 walls_data = pd.read_csv("Walls.csv")
 
 # 遍历每个主机和每个接入点，计算吞吐量
-for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
-    for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
-        # 查找墙面信息
-        wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
-        nk = wall_info.iloc[0, 2:].tolist()  # 从第三列开始是墙面信息
-        # 双括号表示参数是一个元组（tuple），而非单个字符串
-        if ap_name.endswith(("2", "4", "6")):
-            # 如果是结尾为偶数的接口代表着TP-Link T4UH
-            # 使用parameter2的数据
-            # 5Ghz频段 带宽40Mhz
-            with open("parameters2.txt", "r") as file:
-                parameters = {}
-                for line in file:
-                    line = line.strip()
-                    if line.startswith('#'):
-                        continue
-                    key_value = line.split('=')
-                    if len(key_value) == 2:
-                        key, value = map(str.strip, key_value)
-                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
-                            parameters[key] = float(value)
-                        elif key == 'Wk':
-                            parameters[key] = list(map(float, value.split()))
-            try:
-                d = Distance(host_x, host_y, ap_x, ap_y)
-                rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk,parameters['Wk'])
-                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
-                results[i][j] = result
+for matrix_index, connection_matrix in enumerate(all_matrices):
+    for host_index, row in enumerate(connection_matrix):
+        host_name, host_x, host_y = host_coordinates[host_index]
+        for ap_index, connected in enumerate(row):
+            if connected == 1:  # 如果当前主机和接入点之间存在连接
+                ap_name, ap_x, ap_y = ap_coordinates[ap_index]
+                wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
+                nk = wall_info.iloc[0, 2:].tolist()
 
-            except ValueError as e:
-                write_to_file(e)
+                if ap_name.endswith(("2", "4", "6")):
+                    with open("parameters2.txt", "r") as file:
+                        parameters = {}
+                        for line in file:
+                            line = line.strip()
+                            if line.startswith('#'):
+                                continue
+                            key_value = line.split('=')
+                            if len(key_value) == 2:
+                                key, value = map(str.strip, key_value)
+                                if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                                    parameters[key] = float(value)
+                                elif key == 'Wk':
+                                    parameters[key] = list(map(float, value.split()))
 
-        else:
-            # 其他的时候使用普通的板载参数
-            # 2.4GHz 80211n协议 40Mhz信道绑定
-            with open("parameters.txt", "r") as file:
-                parameters = {}
-                for line in file:
-                    line = line.strip()
-                    if line.startswith('#'):
-                        continue
-                    key_value = line.split('=')
-                    if len(key_value) == 2:
-                        key, value = map(str.strip, key_value)
-                        if key in ['alpha', 'P_1', 'a', 'b', 'c']:
-                            parameters[key] = float(value)
-                        elif key == 'Wk':
-                            parameters[key] = list(map(float, value.split()))
-            try:
-                d = Distance(host_x, host_y, ap_x, ap_y)
-                rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
-                result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
-                results[i][j] = result
+                    p_1_initial = parameters['P_1']
+                    while p_1_initial > -80:
+                        parameters['P_1'] = p_1_initial
+            # 计算主机与AP的距离
+                        d = Distance(host_x, host_y, ap_x, ap_y)
+            # 计算接收信号强度(RSS)
+                        rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
+            # 计算估计吞吐量
+                        result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+            # 将结果写入文件
+                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
+            # 在结果数组中保存该结果
+                        results[host_index][ap_index] = result
+                        p_1_initial -= 3
+                else:
+                    with open("parameters.txt", "r") as file:
+                        parameters = {}
+                        for line in file:
+                            line = line.strip()
+                            if line.startswith('#'):
+                                continue
+                            key_value = line.split('=')
+                            if len(key_value) == 2:
+                                key, value = map(str.strip, key_value)
+                                if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+                                    parameters[key] = float(value)
+                                elif key == 'Wk':
+                                    parameters[key] = list(map(float, value.split()))
 
-            except ValueError as e:
-                write_to_file(e)
+                    p_1_initial = parameters['P_1']
+                    while p_1_initial > -50:
+                        parameters['P_1'] = p_1_initial
+                        d = Distance(host_x, host_y, ap_x, ap_y)
+                        rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
+                        result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
+                        results[host_index][ap_index] = result
+                        p_1_initial -= 3
+
 #---------------------------------------------------------------------
 print("Single Throughput Calculated")
 
