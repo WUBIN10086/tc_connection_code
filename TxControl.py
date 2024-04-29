@@ -254,71 +254,11 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
 #---------------------------------------------------------------------
 print("Single Throughput Calculated")
 
-#---------------------------------------------------------------------
-# 决定连接方案从而决定同时连接的数量m
-# concurrent throughput calc.
-# calc signal/success rate factor
-write_to_file("======================")
-write_to_file("Connection assignments")
-write_to_file("----------------------")
-for i, matrix in enumerate(all_matrices):
-    write_to_file(f"Connection {i + 1}:")
-    for row in matrix:
-        write_to_file(f"{row}")
-
-# print(results)
-write_to_file("======================")
-write_to_file("Concurret throughput")
-write_to_file("----------------------")
-all_con_results = []
-# 遍历所有的链接情况
-# 更新results
-for matrix in all_matrices:
-    con_results = copy.deepcopy(results)
-    # 对于一种连接方式的每一列
-    # 代表着遍历每个AP连接的Host数量
-    for j in range(AP_m):
-        Host_index = [] # 同时连接的Host的序号
-        con_num = 0
-        for i in range(host_n):
-            if matrix[i][j] == 1:
-                con_num = con_num + 1
-                Host_index.append(i)
-            elif matrix[i][j] == 0:
-                con_results[i][j] = 0
-        # print("同时连接数量: ", con_num)
-        srf = calculate_srf(con_num)#同时链接的
-        if con_num == 1:
-            continue
-        else:
-            for i in Host_index:
-                concurrent = con_results[i][j]
-                con_results[i][j] = round(concurrent * srf, 2)
-                # print("并发通信吞吐量: " , results[i][j])
-    all_con_results.append(con_results)
-
-for i, con_results in enumerate(all_con_results):
-    write_to_file(f"Connection {i + 1} Results:\n")
-    for result in con_results:
-        # 将结果列表转换为字符串，并用逗号和空格隔开各个元素，最后添加换行符
-        result_str = ', '.join(map(str, result))
-        write_to_file(f"[{result_str}]\n")
-
-#---------------------------------------------------------------------
-print("Concurrent Throughput Calculated")
-
-
-
-
-
-
-
 # 计算所有连接方式的数量
 connection_num = len(all_matrices)
-
 # 指定阈值
 # 阈值根据连接数量进行调整，假设一个Host大约上下浮动3Mbps左右
-impact_threshold = host_n * 3
+
 
 
 
