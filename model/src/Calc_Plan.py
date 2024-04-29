@@ -192,7 +192,7 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
             # 如果是结尾为_2的接口代表着TP-Link T4UH
             # 使用parameter2的数据
             # 5Ghz频段 带宽40Mhz
-            with open("main\etc\parameters2.txt", "r") as file:
+            with open("model\etc\parameters2.txt", "r") as file:
                 parameters = {}
                 for line in file:
                     line = line.strip()
@@ -236,7 +236,7 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
         else:
             # 其他的时候使用普通的板载参数
             # 2.4GHz 80211n协议 40Mhz信道绑定
-            with open("main\etc\parameters.txt", "r") as file:
+            with open("model\etc\parameters.txt", "r") as file:
                 parameters = {}
                 for line in file:
                     line = line.strip()

@@ -21,7 +21,7 @@ def read_configuration(config_file):
 
 
 def main():
-    config_file = r'main/etc/configuration.txt'
+    config_file = r'model/etc/configuration.txt'
     settings = read_configuration(config_file)
 
     # Construct the full path to the Walls.csv file
@@ -61,7 +61,7 @@ def main():
     output_file = f"{settings['output_file']}"
 
     # Call Calc_Plan.py with the necessary arguments
-    subprocess.run(['python', 'main/src/Calc_Plan.py', csv_path, output_file, walls_csv_path], check=True)
+    subprocess.run(['python', 'model/src/Calc_Plan.py', csv_path, output_file, walls_csv_path], check=True)
 
 if __name__ == '__main__':
     main()

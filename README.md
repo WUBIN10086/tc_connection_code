@@ -4,20 +4,23 @@ This code is for Dual interfaces.
 
 Throughput control code is written by Shell, here this code is for calc. best connection assign
 
+## Target of this code
+
+This code aim to find the best assignments while using Dual interfaces, it means that the output of this code is the best connection plan, which have better fairness and higher total throughput.
+
 ## To Do
 
-改进位置图，设计网页前端完成AP和Host的坐标
-
-加入墙面的影响
++ nothing....
 
 ## Code List
 
-+ throughput estimation model
-+ throughput reduce model -> concurrent_calc.py
-+ Host and AP position -> coordinates.csv
-+ Throughput estimation model parameters -> parameters.txt
-+ connection decision code -> main.py
-+ To be update
+The throughput estimation model basic code is in Path://main/src/
+
++ throughput drop model -> concurrent_calc.py
++ connection decision code -> Calc_Plan.py
++ target fairness throughput calculation -> fairness_calc.py
++ fairness index calculation -> fairness_index.py
++ throughput estimation mode -> throughput_estimation.py
 
 ## Descriptions
 
@@ -72,19 +75,22 @@ $$
 scores = ( W_1 * fair~index + W_2 * normalized~total~throughput) * 100
 $$
 
-## How to use(need modify)
+## How to use
 
 Step:
 
-1. Measure the RSS and throughputs for new experiment space or new devices.
-2. use POT to get the optimized parameters.
-3. input the parameters in "parameters.txt", and here, different parameters date file is for different frequency ( 2.4Ghz or 5Ghz )
-4. decide the position for APs and Hosts.
-5. input the coordinates in "coordinates.csv"
-   coordinates decided by the xlsx file `Floor_Plan_for_estimation`, the row of this file represent the X axis, and column represent the Y axis.
-6. input the walls info in "Wall.csv"
-7. run main.py
-8. see the results in "Output.txt"
+1. Please open download the code using `git` or the link.
+1. Open this project with VScode (Recommand).
+1. Please install the extension of VScode -> Live server
+1. Open the file: /html/main/index.html with `Live server` or any other way
+1.  Choose your location map: Engineering building #2 or Graduated building
+1. Input name of `AP` and `Host` as this way: ==AP1 or H1==
+1. Click the AP or Host icon to move and delete, and if need, click the button `Dual interfaces` set this AP as dual band.
+1. Click the button `Export CSV` and download the csv file.
+1. Copy this file into the path: /model/Location/Your Experiment name, and pls also add a wall.csv file in it.
+1. Set the `configuration` and `parameters` in the path: /model/etc.
+1. run the main.py
+1. see the result in /model/output.
 
 ## Measurement Setup
 
@@ -103,3 +109,53 @@ Step:
 |         channel 9+13         |       channel 44+48       |
 |        40Mhz bandwidth        |      40Mhz bandwidth      |
 | Raspberry pi 4B+ embedded NIC | TP-LINK T4UH external NIC |
+
+## Files structure
+
+```c
+Project Tree
+├─ .gitignore
+├─ FloorPlanExcel  // Useless Floder
+│  ├─ Floor_PLan_for_Estimation.xlsx
+│  └─ Measurement.csv
+├─ html // Use this web Loction Plan
+│  ├─ main
+│  │  ├─ Eng#2_Location.html
+│  │  ├─ Gra_Location.html
+│  │  └─ index.html // Please open the index.html when you use it
+│  └─ test
+├─ model
+│  ├─ etc // put the config and setting here!
+│  │  ├─ configuration.txt
+│  │  ├─ parameters.txt
+│  │  └─ parameters2.txt
+│  ├─ Location // import the location here!
+│  │  ├─ Exp1
+│  │  │  ├─ Eng_Location.csv
+│  │  │  └─ Walls.csv
+│  │  └─ Exp2
+│  │     └─ Eng_Location.csv
+│  ├─ output // see the result here!
+│  │  └─ 1AP_3H_Eng.txt
+│  └─ src // simulation functions
+│     ├─ Calc_Plan.py
+│     ├─ concurrent_calc.py
+│     ├─ fairness_calc.py
+│     ├─ fairness_index.py
+│     ├─ throughput_estimation.py
+│     └─ write_to_output.py
+├─ main.py // the enter of the project, Please run this
+├─ README.md
+└─ test // Please ignore
+   ├─ coordinates.csv
+   ├─ d_estimate.py
+   ├─ fairness_test.py
+   ├─ index.py
+   ├─ template.py
+   ├─ test1.py
+   ├─ test2.py
+   ├─ test3.py
+   └─ throughput_estimation.py
+
+```
+

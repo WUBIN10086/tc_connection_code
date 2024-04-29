@@ -3,7 +3,7 @@
 
 # Please set the Location map file path here:
 # For example:
-Path=main\Location\Exp1\
+Path=model\Location\Exp1\
 
 # Target Location: ("1" means used, "0" means no-used)
 # At the same time, you can only choose one setting to "1"

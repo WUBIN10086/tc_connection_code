@@ -1,6 +1,6 @@
 # 写入output
 import os
-OUTPUT_DIR = "main\\output\\"
+OUTPUT_DIR = "model\\output\\"
 # 程序开始时清空文件
 def clear_output_file(filename):
     """ Clears the content of the specified output file. """
