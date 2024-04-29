@@ -31,6 +31,7 @@ import itertools
 import copy
 import datetime
 import time
+import math
 from throughput_estimation import calculate_throughput_estimate
 from throughput_estimation import Rss_calculate
 from throughput_estimation import Distance
@@ -218,7 +219,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                                     parameters[key] = list(map(float, value.split()))
 
                     p_1_initial = parameters['P_1']
-                    while p_1_initial > -80:
+                    while p_1_initial > -55:
                         parameters['P_1'] = p_1_initial
             # 计算主机与AP的距离
                         d = Distance(host_x, host_y, ap_x, ap_y)
@@ -227,10 +228,14 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
             # 计算估计吞吐量
                         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
             # 将结果写入文件
-                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}, p_1:{p_1_initial}")
+
+                        p_t = p_1_initial + 20 * math.log10(1) + 20 * math.log10(5.0e9) + 20 * math.log10(4 * math.pi / 3e8)
+                        rounded_p_t = round(p_t,1)
+
+                        write_to_file(f"{host_name} for {ap_name}: {result}, p_1:{p_1_initial}, p_t:{rounded_p_t}")
             # 在结果数组中保存该结果
                         results[host_index][ap_index] = result
-                        p_1_initial -= 3
+                        p_1_initial -= 2
                 else:
                     with open("parameters.txt", "r") as file:
                         parameters = {}
@@ -247,14 +252,16 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                                     parameters[key] = list(map(float, value.split()))
 
                     p_1_initial = parameters['P_1']
-                    while p_1_initial > -80:
+                    while p_1_initial > -55:
                         parameters['P_1'] = p_1_initial
                         d = Distance(host_x, host_y, ap_x, ap_y)
                         rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
                         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}, p_1:{p_1_initial}")
+                        p_t = p_1_initial + 20 * math.log10(1) + 20 * math.log10(5.0e9) + 20 * math.log10(4 * math.pi / 3e8)
+                        rounded_p_t = round(p_t, 1)
+                        write_to_file(f"{host_name} for {ap_name}: {result}, p_1:{p_1_initial}, p_t:{rounded_p_t}")
                         results[host_index][ap_index] = result
-                        p_1_initial -= 3
+                        p_1_initial -= 2
 
 #---------------------------------------------------------------------
 print("Single Throughput Calculated")
