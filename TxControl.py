@@ -257,7 +257,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                         d = Distance(host_x, host_y, ap_x, ap_y)
                         rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
                         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                        p_t = p_1_initial + 20 * math.log10(1) + 20 * math.log10(5.0e9) + 20 * math.log10(4 * math.pi / 3e8)
+                        p_t = p_1_initial + 20 * math.log10(1) + 20 * math.log10(2.4e9) + 20 * math.log10(4 * math.pi / 3e8)
                         rounded_p_t = round(p_t, 1)
                         write_to_file(f"{host_name} for {ap_name}: {result}, p_1:{p_1_initial}, p_t:{rounded_p_t}")
                         results[host_index][ap_index] = result
