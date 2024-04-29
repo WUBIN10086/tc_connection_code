@@ -227,7 +227,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
             # 计算估计吞吐量
                         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
             # 将结果写入文件
-                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
+                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}, p_1:{p_1_initial}")
             # 在结果数组中保存该结果
                         results[host_index][ap_index] = result
                         p_1_initial -= 3
@@ -247,12 +247,12 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                                     parameters[key] = list(map(float, value.split()))
 
                     p_1_initial = parameters['P_1']
-                    while p_1_initial > -50:
+                    while p_1_initial > -80:
                         parameters['P_1'] = p_1_initial
                         d = Distance(host_x, host_y, ap_x, ap_y)
                         rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
                         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
+                        write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}, p_1:{p_1_initial}")
                         results[host_index][ap_index] = result
                         p_1_initial -= 3
 
@@ -260,7 +260,6 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
 print("Single Throughput Calculated")
 
 # 计算所有连接方式的数量
-connection_num = len(all_matrices)
 # 指定阈值
 # 阈值根据连接数量进行调整，假设一个Host大约上下浮动3Mbps左右
 
