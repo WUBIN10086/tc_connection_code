@@ -72,6 +72,7 @@ def main():
         # Call Calc_Plan.py with the necessary arguments
         subprocess.run(['python', 'model/src/Calc_Plan.py', csv_path, output_file, walls_csv_path], check=True)
     
+    # If the mode=0 will use active AP algorithm
     elif(settings['mode']==1):
         print("==============================")
         print("The system mode(1) is using active AP algorithm")
