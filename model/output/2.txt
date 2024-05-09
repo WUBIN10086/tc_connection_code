@@ -1,4 +1,4 @@
-Date and Time: 2024-05-10 06:19
+Date and Time: 2024-05-10 06:40
 ======================
 Devices number
 ----------------------
@@ -10,8 +10,8 @@ Connection number: 1022
 Deivces Location
 ----------------------
 AP Coordinates:
-('AP3_1', 13.5, 12.5)
-('AP3_2', 13.5, 12.5)
+('AP1', 13.5, 12.5)
+('AP2', 13.5, 12.5)
 ----------------------
 Host Coordinates:
 ('H1 ', 1.5, 8.0)

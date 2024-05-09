@@ -5,9 +5,12 @@
 #================================================================
 import random
 import csv
+import copy
+import numpy as np
 import sys
 import pandas as pd
 import itertools
+from itertools import product
 import datetime
 import time
 from throughput_estimation import calculate_throughput_estimate
@@ -75,14 +78,16 @@ AIActive = [APInfo() for _ in range(DEFAULT_MAX_AP)]
 HIActive = [HostInfo() for _ in range(DEFAULT_MAX_HOST)]
 
 # CSV文件地址
-# Location_csv_path = 'model\Location\Exp1\Eng_Location.csv'
+Location_csv_path = 'model\Location\Exp1\Eng_Location.csv'
 # # Location_csv_path = sys.argv[1]
 # # Walls_csv_path = sys.argv[3]
-# Walls_csv_path = 'model\Location\Exp1\Walls.csv'
-Location_csv_path = sys.argv[1]
-Walls_csv_path = sys.argv[2]
-RandSeed = sys.argv[3]
-output_filename = sys.argv[4]
+RandSeed = 50
+output_filename = "test.txt"
+Walls_csv_path = 'model\Location\Exp1\Walls.csv'
+# Location_csv_path = sys.argv[1]
+# Walls_csv_path = sys.argv[2]
+# RandSeed = sys.argv[3]
+# output_filename = sys.argv[4]
 
 adjustedRatio = 1.0
 linkSpeedThreshold = float(1)
@@ -384,6 +389,7 @@ for i in range(NoAP):
 #----------------------------------------------------------------
 
 
+
 #----------------------------------------------------------------
 def phase_initial_solution_search():
     # Initialize association to -1 (no association)
@@ -467,6 +473,7 @@ for i in range(NoHost):
             HIActive[i].AP_HostLinkSpeed.append(AP_HostLinkSpeed[HINew[i].ConAP[j] - 1][i])
             HIActive[i].NoConAP += 1
 #----------------------------------------------------------------
+
 
 #----------------------------------------------------------------
 def test_nearest_ap_host_association():
@@ -867,6 +874,15 @@ write_to_file(f"Date and Time: {formatted_datetime}", output_filename)
 # 开始处理标志：
 print("START!!!")
 
+def get_active_aps(AIActive, NoAP):
+    active_aps = []
+    for i in range(NoAP):
+        if AIActive[i].ifActive == 1:
+            active_aps.append(AIActive[i].APID)
+    return active_aps
+
+active_aps = get_active_aps(AIActive, NoAP)
+active_ap_data = []
 # 从 CSV 文件中读取 Host 和 AP 的数量
 with open(Location_csv_path, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
@@ -876,8 +892,8 @@ with open(Location_csv_path, newline='') as csvfile:
         if row["Type"] == "Host":
             host_n += 1
         elif row["Type"] == "AP":
-            for i in range(NoAP):
-                if AIActive[i].ifActive == 1: 
+            if row["Name"] in active_aps:
+                    active_ap_data.append(row)
                     AP_m += 1
 
 # 输出 Host 和 AP 的数量
@@ -893,19 +909,28 @@ write_to_file(f"Number of Hosts: {host_n}", output_filename)
 write_to_file(f"Number of APs: {AP_m}", output_filename)
 print("Read Devices number: Finished")
 
+# -------------------------------------------------------------
+# 更新了筛选方式：
 # 存储所有的连接方式
-all_matrices = []
+def valid_matrix(matrix):
+    # 筛选条件1: 每行最多一个1
+    if np.all(matrix.sum(axis=1) <= 1):
+        # 筛选条件2: 每列至少一个1
+        if np.all(matrix.sum(axis=0) >= 1):
+            # 筛选条件3: 每行至少一个1
+            if np.all(matrix.sum(axis=1) >= 1):
+                return True
+    return False
 
-for combination in itertools.product([0, 1], repeat=host_n * AP_m):
-    matrix = [list(combination[i:i+AP_m]) for i in range(0, host_n * AP_m, AP_m)]
+def generate_valid_matrices(host_n, AP_m):
+    all_matrices = []
+    for combination in product([0, 1], repeat=host_n * AP_m):
+        matrix = np.array(combination).reshape(host_n, AP_m)
+        if valid_matrix(matrix):
+            all_matrices.append(matrix)
+    return all_matrices
 
-    # 筛选条件1：删除包含 1 多于一个的行
-    if all(row.count(1) <= 1 for row in matrix):
-        # 筛选条件2：检查每一列是否至少有一个 1
-        if all(any(row[j] == 1 for row in matrix) for j in range(AP_m)):
-            # 筛选条件3：检查每一行是否至少有一个 1
-            if all(1 in row for row in matrix):
-                all_matrices.append(matrix)
+all_matrices = generate_valid_matrices(host_n, AP_m)
 write_to_file(f"----------------------", output_filename)
 write_to_file(f"Connection number: {len(all_matrices)}", output_filename)
 print("Connection Assignment: Finished")
@@ -927,9 +952,8 @@ with open(Location_csv_path, newline='') as csvfile:
         entity_type = row["Type"]
         # 根据实体类型将坐标信息添加到相应的数组
         if entity_type == "AP":
-            for i in range(NoAP):
-                if AIActive[i].ifActive == 1 and name == AIActive[i].APID:
-                    ap_coordinates.append((name, x, y))
+            if row["Name"] in active_aps:
+                ap_coordinates.append((name, x, y))
         elif entity_type == "Host":
             host_coordinates.append((name, x, y))
 

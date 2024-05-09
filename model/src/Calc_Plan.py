@@ -62,9 +62,12 @@ from write_to_output import write_to_file, clear_output_file
 # element X_ij represent connect(1) or disconnect(0)
 
 # Read command-line arguments
-Location_csv_path = sys.argv[1]
-output_filename = sys.argv[2]
-Walls_csv_path = sys.argv[3]
+# Location_csv_path = sys.argv[1]
+# output_filename = sys.argv[2]
+# Walls_csv_path = sys.argv[3]
+Location_csv_path = 'model\Location\Exp2\Eng_Location.csv'
+output_filename = "2.txt"
+Walls_csv_path = 'model\Location\Exp2\Walls.csv'
 
 # 记录开始时间
 start_time = time.time()
@@ -188,7 +191,7 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
         wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
         nk = wall_info.iloc[0, 2:].tolist()  # 从第三列开始是墙面信息
         # 双括号表示参数是一个元组（tuple），而非单个字符串
-        if ap_name.endswith(("_2")):
+        if ap_name.endswith(("2")):
             # 如果是结尾为_2的接口代表着TP-Link T4UH
             # 使用parameter2的数据
             # 5Ghz频段 带宽40Mhz
