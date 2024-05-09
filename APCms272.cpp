@@ -287,7 +287,6 @@ int main(int argc, char *argv[])
 
     determineAssociabilityOfAP_HostUsingOnlyCoverageRadius();
 
-
     phase_initialization();
 
     sumLinkCandidate = 0;
