@@ -72,11 +72,11 @@ def main():
         # Call Calc_Plan.py with the necessary arguments
         subprocess.run(['python', 'model/src/Calc_Plan.py', csv_path, output_file, walls_csv_path], check=True)
     
-    # If the mode=0 will use active AP algorithm
+    # If the mode=1 will use active AP algorithm
     elif(settings['mode']==1):
         print("==============================")
         print("The system mode(1) is using active AP algorithm")
-
+        walls_csv_path = os.path.join(settings['path'], 'Walls.csv')
         # csv path read
         # Check if both locations are set to 1, which is not allowed
         if settings['gra_location'] and settings['eng2_location']:
@@ -107,10 +107,9 @@ def main():
         else:
             print("The random seed is:",settings['seed'])
         RandomSeed = settings['seed']
+        output_file = f"{settings['output_file']}"
         
-        
-
-        subprocess.run(['python', 'model/src/ActiveAP.py', csv_path, RandomSeed], check=True)
+        subprocess.run(['python', 'model/src/ActiveAP.py', csv_path, walls_csv_path, RandomSeed, output_file], check=True)
 
     else:
         print("Error! The mode is:", settings['mode'],". Please check the mode setting in configuration.conf")

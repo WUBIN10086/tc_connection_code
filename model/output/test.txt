@@ -1,0 +1,6 @@
+Date and Time: 2024-05-09 20:48
+======================
+Devices number
+----------------------
+Number of Hosts: 10
+Number of APs: 10

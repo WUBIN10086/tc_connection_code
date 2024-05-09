@@ -7,15 +7,15 @@ import random
 import csv
 import sys
 import pandas as pd
-import itertools
+import math
+import copy
 import datetime
 import time
 from throughput_estimation import calculate_throughput_estimate
 from throughput_estimation import Distance
-from concurrent_calc import calculate_srf
-from fairness_calc import Fairness_calc
-from fairness_index import calculate_fairness_index
-from write_to_output import write_to_file, clear_output_file
+from throughput_estimation import calculate_throughput_estimate
+
+
 #----------------------------------------------------------------
 # 数据结构
 class APInfo:
@@ -35,6 +35,11 @@ class APInfo:
         self.participateInSelection = participateInSelection
         self.nodeID = nodeID
         self.ChannelID = ChannelID
+    
+    def copy(self):
+        return APInfo(self.APID, self.PositionX, self.PositionY, self.GroupID, self.NoConHost,
+                      list(self.ConHost), self.ifActive, self.HostMargin, self.ifSatisfied,
+                      self.type, self.participateInSelection, self.nodeID, self.ChannelID)
 
 class HostInfo:
     def __init__(self, HostID=0, PositionX=0.0, PositionY=0.0, GroupID=0, HostActiveRate=0.0,
@@ -55,6 +60,11 @@ class HostInfo:
         self.nodeID = nodeID
         self.ChannelID = ChannelID
         self.movable = movable
+    
+    def copy(self):
+        return HostInfo(self.HostID, self.PositionX, self.PositionY, self.GroupID, self.NoConAP,
+                      list(self.ConAP), self.SatAP, self.NoSat, self.HostActiveRate,
+                      self.AP_HostLinkSpeed, self.AssocAP, self.nodeID, self.ChannelID)
 
 # Constants
 DEFAULT_MAX_AP = 100
@@ -76,13 +86,11 @@ HIActive = [HostInfo() for _ in range(DEFAULT_MAX_HOST)]
 
 # CSV文件地址
 # Location_csv_path = 'model\Location\Exp1\Eng_Location.csv'
-# # Location_csv_path = sys.argv[1]
-# # Walls_csv_path = sys.argv[3]
-# Walls_csv_path = 'model\Location\Exp1\Walls.csv'
 Location_csv_path = sys.argv[1]
 Walls_csv_path = sys.argv[2]
 RandSeed = sys.argv[3]
 output_filename = sys.argv[4]
+# Walls_csv_path = 'model\Location\Exp1\Walls.csv'
 
 adjustedRatio = 1.0
 linkSpeedThreshold = float(1)
@@ -97,7 +105,7 @@ totalBandwidth = float(1000)
 #----------------------------------------------------------------
 
 #----------------------------------------------------------------
-random.seed(RandSeed)
+random.seed(50)
 # 读取坐标信息
 gridSizeX = int(2)
 gridSizeY = int(2)
@@ -685,65 +693,9 @@ print('-------------------------------------')
 
 #----------------------------------------------------------------
 # phase_additional_AP_activation
-
-def phase_additional_ap_activation():
-    global AIActive, HIActive, NoAP, NoHost, AP_HostLinkSpeed, AverageHostThroughputThreshold
-
-    # Active and Inactive AP tracking
-    active_aps = [i for i, ap in enumerate(AIActive) if ap.ifActive]
-    inactive_aps = [i for i, ap in enumerate(AIActive) if not ap.ifActive]
-    no_of_active_aps = len(active_aps)
-
-    # Optimization variables
-    best_found_no_of_active_aps = no_of_active_aps
-    best_found_max_tx_time = calculate_max_tx_time_among_aps()
-
-    # Selection flags and host reassociation logic
-    ap_selection_flag = [0] * NoAP
-
-    # Optimization loop
-    for loop_count in range(LOOP_COUNT_AP_SELECTION_OPTIMIZATION):
-        for i in active_aps:
-            ap_selection_flag[i] = 0
-
-        for _ in range(LOOP_COUNT_AP_SELECTION_OPTIMIZATION):
-            random.shuffle(inactive_aps)
-            if len(inactive_aps) == 0:
-                break
-
-            ap_to_activate = inactive_aps.pop()
-            AIActive[ap_to_activate].ifActive = True
-
-            # Attempt to reassociate hosts to the newly activated AP
-            reassigned_hosts = reassociate_hosts(ap_to_activate)
-
-            # Evaluate the new network state
-            new_max_tx_time = calculate_max_tx_time_among_aps()
-
-            # Determine if the new state is better
-            if len(reassigned_hosts) > 0 and new_max_tx_time < best_found_max_tx_time:
-                best_found_max_tx_time = new_max_tx_time
-            else:
-                # Revert changes if not better
-                AIActive[ap_to_activate].ifActive = False
-                for host in reassigned_hosts:
-                    reassociate_host_to_original_ap(host)
-
-def reassociate_hosts(new_ap_index):
-    reassigned_hosts = []
-    for host_index, host in enumerate(HIActive):
-        if host.AssocAP == new_ap_index + 1:  # Host is already associated with this AP
-            continue
-        # Logic to determine if reassigning this host is beneficial
-        original_ap = host.AssocAP - 1
-        original_tx_time = calculate_tx_time_for_ap(original_ap)
-        new_tx_time = calculate_tx_time_for_ap(new_ap_index)
-
-        if new_tx_time < original_tx_time:
-            host.AssocAP = new_ap_index + 1
-            reassigned_hosts.append(host_index)
-
-    return reassigned_hosts
+def SaveSolution(src, dst):
+    for i, ap in enumerate(src):
+        dst[i] = ap.copy()
 
 def calculate_max_tx_time_among_aps():
     max_tx_time = -0.1  # Initialize maxTxTime with a very low starting value
@@ -761,9 +713,56 @@ def calculate_max_tx_time_among_aps():
 
     return max_tx_time
 
-def reassociate_host_to_original_ap(host_index):
-    # This function would revert the host's association to its original state
-    pass
+# Main function
+AIBestSol = [ap.copy() for ap in AIActive]
+HIBestSol = [host.copy() for host in AIActive]
+
+# # Create an instance of APInfo
+# test_ap = APInfo(APID=1, PositionX=100, PositionY=200, ifActive=1, ConHost=[1, 2, 3])
+# copied_ap = test_ap.copy()
+# print(copied_ap.PositionX, copied_ap.PositionY)  # This should print: 100 200
+
+def phase_additional_AP_activation():
+    noOfActiveAp = sum(ap.ifActive for ap in AIActive)  # Corrected line
+    bestFoundNoOfActiveAP = noOfActiveAp
+    bestFoundMaxTxTime = calculate_max_tx_time_among_aps()
+    AIBestSol = [ap.copy() for ap in AIActive]  # Assuming a copy method or similar functionality
+    HIBestSol = [host.copy() for host in HIActive]  # Assuming a copy method or similar functionality
+
+    improvement = True
+    while improvement:
+        improvement = False
+        for _ in range(LOOP_COUNT_AP_SELECTION_OPTIMIZATION):
+            listOfActiveAP = [i for i, ap in enumerate(AIActive) if ap.ifActive]
+            listOfOFFActiveAP = [i for i in listOfActiveAP if not AIActive[i].participateInSelection]
+
+            if listOfOFFActiveAP:
+                APToDeactivate = random.choice(listOfOFFActiveAP)
+                AIActive[APToDeactivate].ifActive = False
+                noOfActiveAp -= 1
+
+            # Reassessing all hosts for re-association
+            for host_index in range(NoHost):
+                HIActive[host_index].ConAP = [ap for ap in HIActive[host_index].ConAP if AIActive[ap - 1].ifActive]
+                if not HIActive[host_index].ConAP:
+                    newAP = random.choice(listOfActiveAP)
+                    HIActive[host_index].ConAP.append(newAP + 1)
+
+            newMaxTxTime = calculate_max_tx_time_among_aps()
+            if newMaxTxTime < bestFoundMaxTxTime or noOfActiveAp < bestFoundNoOfActiveAP:
+                bestFoundNoOfActiveAP = noOfActiveAp
+                bestFoundMaxTxTime = newMaxTxTime
+                SaveSolution(AIActive, AIBestSol)
+                SaveSolution(HIActive, HIBestSol)
+                improvement = True
+
+        if bestFoundMaxTxTime < AverageHostThroughputThreshold:
+            break
+
+phase_additional_AP_activation()
+print("phase_additional_ap_activation Finished")
+# print_result()
+print('-------------------------------------')
 
 #----------------------------------------------------------------
 for i in range(0, NoAP, 2):  # Increment by 2 to only check even-indexed APs
@@ -777,10 +776,6 @@ for i in range(0, NoAP, 2):  # Increment by 2 to only check even-indexed APs
                 HIActive[j].ConAP.append(i + 2)  # Assume ConAP is a list in Python
                 HIActive[j].NoConAP += 1
 
-phase_additional_ap_activation()
-print("phase_additional_ap_activation Finished")
-# print_result()
-print('-------------------------------------')
 #----------------------------------------------------------------
 # phase_random_move_to_reduce_tx_time_for_bottleneck_ap()
 # print("phase_random_move_to_reduce_tx_time_for_bottleneck_ap Finished")
@@ -849,6 +844,7 @@ print_result()
 
 
 
+
 # 记录开始时间
 start_time = time.time()
 # 输出结果到文本文件
@@ -876,9 +872,7 @@ with open(Location_csv_path, newline='') as csvfile:
         if row["Type"] == "Host":
             host_n += 1
         elif row["Type"] == "AP":
-            for i in range(NoAP):
-                if AIActive[i].ifActive == 1: 
-                    AP_m += 1
+            AP_m += 1
 
 # 输出 Host 和 AP 的数量
 #print("======================")
@@ -927,9 +921,7 @@ with open(Location_csv_path, newline='') as csvfile:
         entity_type = row["Type"]
         # 根据实体类型将坐标信息添加到相应的数组
         if entity_type == "AP":
-            for i in range(NoAP):
-                if AIActive[i].ifActive == 1 and name == AIActive[i].APID:
-                    ap_coordinates.append((name, x, y))
+            ap_coordinates.append((name, x, y))
         elif entity_type == "Host":
             host_coordinates.append((name, x, y))
 
@@ -947,6 +939,15 @@ for host in host_coordinates:
 write_to_file("======================", output_filename)
 print("Read Devices Location: Finished")
 
+# nk = [1, 2]  # 根据需要提供 nk 的值
+# nk 为AP和Host之间各种墙面的影响数量
+# corridor wall for W1, 
+# the partition wall for W2, 
+# the intervening wall for W3, 
+# the glass wall for W4, 
+# the elevator wall for W5, 
+# and the door for W6.
+# Roy的程序中注释掉了墙面的影响，默认就是一堵墙
 write_to_file("Single Throughput", output_filename)
 write_to_file("----------------------", output_filename)
 results = []
@@ -990,6 +991,27 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
 
             except ValueError as e:
                 write_to_file(e, output_filename)
+        # elif ap_name.endswith("3"):
+        #     # 加入一个新的parameters3，作为当主机吞吐量与其他主机相差较大时，调整仿真到符合现实测量
+        #     with open("parameters3.txt", "r") as file:
+        #         parameters = {}
+        #         for line in file:
+        #             line = line.strip()
+        #             if line.startswith('#'):
+        #                 continue
+        #             key_value = line.split('=')
+        #             if len(key_value) == 2:
+        #                 key, value = map(str.strip, key_value)
+        #                 if key in ['alpha', 'P_1', 'a', 'b', 'c']:
+        #                     parameters[key] = float(value)
+        #                 elif key == 'Wk':
+        #                     parameters[key] = list(map(float, value.split()))
+        #     try:
+        #         result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
+        #         print(f"{host_name} for {ap_name}: {result}")
+        #         results[i][j] = result
+        #     except ValueError as e:
+        #         print(e)
         else:
             # 其他的时候使用普通的板载参数
             # 2.4GHz 80211n协议 40Mhz信道绑定
@@ -1120,11 +1142,30 @@ for i, fair_results in enumerate(all_fair_results):
 print("Fairness index Calculated")
 
 
+#---------------------------------------------------------------------
+# 排序寻找最佳的连接方式
+# 因为fairness index和总吞吐量之间的单位相差过大，
+# 因此使用归一化方法，将总吞吐量转化为和fairness index一样的单位范围，
+# 然后通过设计权重去判断合适的最佳组合。
 
 best_connections = []
 
+# 根据结果确定权重，初始化权重
 W_1 = 0
 W_2 = 0
+
+# 判断总吞吐量的离散程度
+# 由于吞吐量在实际测量中存在上下波动，
+# 如果总吞吐量相差只有1或者2的话实际上不同的连接方式最后测量的结果相差不大
+# 若吞吐量相差不大的话则优先考虑公平性指数，如果总吞吐量相差过大则优先考虑吞吐量大小
+'''
+総スループットの分散を判断する
+実際の測定ではスループットは上下に変動するため、
+たとえば、総スループットの差が1か2しかない場合、異なる接続方法の間で最終的な測定値に大きな差は生じない。
+スループットの差が小さい場合は公平性指標を優先し、
+総スループットの差が大きすぎる場合はスループットサイズを優先する。
+'''
+
 
 # 计算每种连接方式下的总吞吐量大小
 all_totals =[]
