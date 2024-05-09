@@ -184,12 +184,20 @@ results = [[0.0] * num_aps for _ in range(num_hosts)]
 # 读取墙面信息
 walls_data = pd.read_csv(Walls_csv_path)
 
+def get_wall_info(ap_name, host_name):
+    wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
+    if not wall_info.empty:
+        nk = wall_info.iloc[0, 2:].tolist()  # Accessing columns directly
+        return nk
+    else:
+        print(f"No wall data found for AP {ap_name} and Host {host_name}")
+        return [0] * (walls_data.shape[1] - 2)  # Default no impact
+
 # 遍历每个主机和每个接入点，计算吞吐量
 for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
     for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
         # 查找墙面信息
-        wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
-        nk = wall_info.iloc[0, 2:].tolist()  # 从第三列开始是墙面信息
+        nk = get_wall_info(ap_name, host_name)
         # 双括号表示参数是一个元组（tuple），而非单个字符串
         if ap_name.endswith(("2")):
             # 如果是结尾为_2的接口代表着TP-Link T4UH
