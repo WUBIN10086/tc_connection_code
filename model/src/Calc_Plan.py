@@ -145,34 +145,75 @@ print("Read Devices Location: Finished")
 
 # 更新了筛选方式：
 # 初始化存储所有的连接方式
-def valid_matrix(matrix):
-    # 筛选条件1: 每行最多一个1
-    if np.all(matrix.sum(axis=1) <= 1):
-        # 筛选条件2: 每列至少一个1
-        if np.all(matrix.sum(axis=0) >= 1):
-            # 筛选条件3: 每行至少一个1
-            if np.all(matrix.sum(axis=1) >= 1):
-                return True
-    return False
+# def valid_matrix(matrix):
+#     # 筛选条件1: 每行最多一个1
+#     if np.all(matrix.sum(axis=1) <= 1):
+#         # 筛选条件2: 每列至少一个1
+#         if np.all(matrix.sum(axis=0) >= 1):
+#             # 筛选条件3: 每行至少一个1
+#             if np.all(matrix.sum(axis=1) >= 1):
+#                 return True
+#     return False
 
-def generate_valid_matrices(host_n, AP_m):
-    all_matrices = []
-    for combination in product([0, 1], repeat=host_n * AP_m):
-        matrix = np.array(combination).reshape(host_n, AP_m)
-        if valid_matrix(matrix):
-            all_matrices.append(matrix)
-    return all_matrices
+# def generate_valid_matrices(host_n, AP_m):
+#     all_matrices = []
+#     for combination in product([0, 1], repeat=host_n * AP_m):
+#         matrix = np.array(combination).reshape(host_n, AP_m)
+#         if valid_matrix(matrix):
+#             all_matrices.append(matrix)
+#     return all_matrices
 
-all_matrices = generate_valid_matrices(host_n, AP_m)
-write_to_file(f"----------------------", output_filename)
-write_to_file(f"Connection number: {len(all_matrices)}", output_filename)
-print("Inti Connection Assignment: Finished")
-#---------------------------------------------------------------------
+# all_matrices = generate_valid_matrices(host_n, AP_m)
+# write_to_file(f"----------------------", output_filename)
+# write_to_file(f"Connection number: {len(all_matrices)}", output_filename)
+# print("Inti Connection Assignment: Finished")
+# #---------------------------------------------------------------------
+
+# def calculate_all_distances_and_find_max(hosts, aps):
+#     distances = {}
+#     max_distance = 0
+#     max_pair = None
+
+#     for host_name, host_x, host_y in hosts:
+#         for ap_name, ap_x, ap_y in aps:
+#             key = (host_name, ap_name)
+#             dist = Distance(host_x, host_y, ap_x, ap_y)
+#             distances[key] = dist
+#             if dist > max_distance:
+#                 max_distance = dist
+#                 max_pair = key
+
+#     return distances, max_distance, max_pair
+
+# # 寻找最远距离的组合:
+# distances, max_distance, max_pair = calculate_all_distances_and_find_max(host_coordinates, ap_coordinates)
+# print(f"The maximum distance is {max_distance:.2f} units between {max_pair[0]} and {max_pair[1]}.")
+
+# # 删除最远距离的组合:
+# host_names = [name for name, x, y in host_coordinates]  # List of host names
+# ap_names = [name for name, x, y in ap_coordinates]  # List of AP names
+# host_name, ap_name = max_pair
+# host_index = host_names.index(host_name)
+# ap_index = ap_names.index(ap_name)
+# filtered_matrices = [
+#     matrix for matrix in all_matrices if matrix[host_index][ap_index] == 0
+# ]
+# print(f"Number of valid matrices after filtering: {len(filtered_matrices)}")
+# write_to_file(f"New Connection number after Distance filter: {len(filtered_matrices)}", output_filename)
+# def calculate_distances(hosts, aps):
+#     distances = {}
+#     for host_name, host_x, host_y in hosts:
+#         for ap_name, ap_x, ap_y in aps:
+#             key = (host_name, ap_name)
+#             dist = np.sqrt((host_x - ap_x)**2 + (host_y - ap_y)**2)
+#             distances[key] = dist
+#     return distances
+
+# 设置一个距离阈值
 
 def calculate_all_distances_and_find_max(hosts, aps):
     distances = {}
     max_distance = 0
-    max_pair = None
 
     for host_name, host_x, host_y in hosts:
         for ap_name, ap_x, ap_y in aps:
@@ -181,27 +222,44 @@ def calculate_all_distances_and_find_max(hosts, aps):
             distances[key] = dist
             if dist > max_distance:
                 max_distance = dist
-                max_pair = key
+    return distances,max_distance
 
-    return distances, max_distance, max_pair
+distances, distance_threshold = calculate_all_distances_and_find_max(host_coordinates, ap_coordinates)
+print(f"The maximum distance and threshold is {distance_threshold:.2f}.")
 
-# 寻找最远距离的组合:
-distances, max_distance, max_pair = calculate_all_distances_and_find_max(host_coordinates, ap_coordinates)
-print(f"The maximum distance is {max_distance:.2f} units between {max_pair[0]} and {max_pair[1]}.")
+def generate_valid_matrices(hosts, aps, distances, max_conn_ratio):
+    host_n = len(hosts)
+    AP_m = len(aps)
+    max_host_per_ap = int(host_n * max_conn_ratio)
+    all_matrices = []
+    for combination in product([0, 1], repeat=host_n * AP_m):
+        matrix = np.array(combination).reshape(host_n, AP_m)
+        # print("Inti Connection Assignment: Finished")
+        # 检查每个AP的连接数是否符合限制
+        if np.all(matrix.sum(axis=0) <= max_host_per_ap):
+            # 检查是否每个连接都在距离阈值内
+            valid = True
+            for i in range(host_n):
+                for j in range(AP_m):
+                    if matrix[i][j] == 1:
+                        host_name = hosts[i][0]
+                        ap_name = aps[j][0]
+                        if distances[(host_name, ap_name)] >= distance_threshold:
+                            valid = False
+                            break
+                if not valid:
+                    break
+            
+            if valid:
+                all_matrices.append(matrix)
+                
+    return all_matrices
 
-# 删除最远距离的组合:
-host_names = [name for name, x, y in host_coordinates]  # List of host names
-ap_names = [name for name, x, y in ap_coordinates]  # List of AP names
-host_name, ap_name = max_pair
-host_index = host_names.index(host_name)
-ap_index = ap_names.index(ap_name)
-filtered_matrices = [
-    matrix for matrix in all_matrices if matrix[host_index][ap_index] == 0
-]
+# 使用修改后的函数
+filtered_matrices = generate_valid_matrices(host_coordinates, ap_coordinates, distances, 0.8)
+write_to_file(f"----------------------", output_filename)
 print(f"Number of valid matrices after filtering: {len(filtered_matrices)}")
 write_to_file(f"New Connection number after Distance filter: {len(filtered_matrices)}", output_filename)
-
-
 
 #---------------------------------------------------------------------
 # nk = [1, 2]  # 根据需要提供 nk 的值
@@ -243,7 +301,7 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
         # print(type(ap_name))
         nk = get_wall_info(ap_name, host_name)
         # 双括号表示参数是一个元组（tuple），而非单个字符串
-        if ap_name.endswith(("2")):
+        if ap_name.endswith(("_2")):
             # 如果是结尾为_2的接口代表着TP-Link T4UH
             # 使用parameter2的数据
             # 5Ghz频段 带宽40Mhz

@@ -1,43 +1,117 @@
-2 2
-50
-110.0
+import csv
+import time
+import datetime
+import random
+from throughput_estimation import calculate_throughput_estimate, Distance
+from concurrent_calc import calculate_srf
+from fairness_calc import Fairness_calc
+from fairness_index import calculate_fairness_index
+from write_to_output import write_to_file, clear_output_file
+import numpy as np
+import pandas as pd
 
-10
-10
+# 读取输入数据的路径
+Location_csv_path = 'model/Location/Exp1/After avtive AP/Eng_Location.csv'
+output_filename = "Topology_1.txt"
+Walls_csv_path = 'model/Location/Exp1/After avtive AP/Walls.csv'
 
-3
-1 1 1 
-1 1 1 
-1 1 1 
+# 读取位置数据
+def read_locations(path):
+    hosts = {}
+    aps = {}
+    with open(path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            name = row["Name"]
+            x = float(row["X"])
+            y = float(row["Y"])
+            if row["Type"] == "AP":
+                aps[name] = (x, y)
+            elif row["Type"] == "Host":
+                hosts[name] = (x, y)
+    return hosts, aps
 
-30
-50
+# 计算AP和Host之间的距离
+def calculate_distances(hosts, aps):
+    distances = {}
+    for host_name, (host_x, host_y) in hosts.items():
+        for ap_name, (ap_x, ap_y) in aps.items():
+            distances[(host_name, ap_name)] = Distance(host_x, host_y, ap_x, ap_y)
+    return distances
 
+# 遗传算法：寻找最优连接方案
+def initialize_population(size, hosts, aps, max_conn_ratio):
+    population = []
+    max_hosts_per_ap = int(len(hosts) * max_conn_ratio)
+    host_list = list(hosts.keys())
+    for _ in range(size):
+        individual = {ap: random.sample(host_list, k=random.randint(0, max_hosts_per_ap))
+                      for ap in aps}
+        population.append(individual)
+    return population
 
+def fitness(individual, distances, walls_data):
+    # 计算个体的适应度
+    total_throughput = 0
+    for ap, connected_hosts in individual.items():
+        for host in connected_hosts:
+            distance = distances[(host, ap)]
+            wall_info = walls_data.get((ap, host), [0] * 6)  # 默认值
+            throughput = calculate_throughput_estimate(distance, wall_info)
+            total_throughput += throughput
+    fairness = calculate_fairness_index([total_throughput])  # 简化版
+    return total_throughput * fairness
 
-1 2.5 3.3 1 0
-2 2.5 3.3 1 0
-3 7.3 3.3 1 0
-4 7.3 3.3 1 0
-5 13.9 3.3 1 0
-6 13.9 3.3 1 0
-7 6.8 10.7 1 0
-8 6.8 10.7 1 0
-9 15.3 7.8 1 0
-10 15.3 7.8 1 0
+def crossover(parent1, parent2, aps):
+    child = {}
+    for ap in aps:
+        if random.random() > 0.5:
+            child[ap] = parent1[ap]
+        else:
+            child[ap] = parent2[ap]
+    return child
 
+def mutate(individual, hosts, max_conn_ratio):
+    max_hosts_per_ap = int(len(hosts) * max_conn_ratio)
+    host_list = list(hosts.keys())
+    for ap in individual:
+        if random.random() < 0.1:  # 变异几率
+            individual[ap] = random.sample(host_list, k=random.randint(0, max_hosts_per_ap))
 
+def genetic_algorithm(hosts, aps, distances, walls_data, generations=100, population_size=50, max_conn_ratio=0.8):
+    population = initialize_population(population_size, hosts, aps, max_conn_ratio)
+    for _ in range(generations):
+        population.sort(key=lambda ind: fitness(ind, distances, walls_data), reverse=True)
+        next_generation = population[:2]  # 精英主义
+        while len(next_generation) < population_size:
+            parent1, parent2 = random.sample(population[:10], 2)  # 锦标赛选择
+            child = crossover(parent1, parent2, aps)
+            mutate(child, hosts, max_conn_ratio)
+            next_generation.append(child)
+        population = next_generation
+    return population[0]
 
+def main():
+    # 清理并写入初始数据到输出文件
+    clear_output_file(output_filename)
+    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    write_to_file(f"Date and Time: {current_datetime}", output_filename)
 
+    # 加载位置和墙壁数据
+    hosts, aps = read_locations(Location_csv_path)
+    distances = calculate_distances(hosts, aps)
+    walls_data = {}  # 应适当加载或计算墙壁数据
 
+    # 运行遗传算法找到最佳设置
+    start_time = time.time()
+    best_setup = genetic_algorithm(hosts, aps, distances, walls_data)
+    execution_time = time.time() - start_time
 
-1 0.7 5.5 1 1 0
-2 0.8 1.6 1 1 0
-3 9.7 1.5 1 1 0
-4 4.7 5.5 1 1 0
-5 9.8 5.6 1 1 0
-6 12.0 5.7 1 1 0
-7 16.9 5.6 1 1 0
-8 17.1 1.5 1 1 0
-9 4.3 9.5 1 1 0
-10 9.7 14.7 1 1 0
+    # 将最佳设置写入输出文件
+    write_to_file(f"Best Setup: {best_setup}", output_filename)
+    write_to_file(f"Code executed in {execution_time:.2f} seconds", output_filename)
+
+    print("Procedure Finished!!!")
+
+if __name__ == "__main__":
+    main()

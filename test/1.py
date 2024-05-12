@@ -1,54 +1,56 @@
-import math
+class AP:
+    def __init__(self, name, x, y):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.connected_hosts = []
 
-c = 299792458 
-d =1
+    def connect_host(self, host_id):
+        self.connected_hosts.append(host_id)
 
-RSS1 = -28
-RSS2 = -40
+    def __repr__(self):
+        return f"AP({self.name}, X={self.x}, Y={self.y}, Connected Hosts={self.connected_hosts})"
 
-f = 2_452_000_000
+class Host:
+    def __init__(self, name, x, y):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.connected_ap = None
 
-Pr1 = 10 ** (RSS1 / 10)
-Pr2 = 10 ** (RSS2 / 10)
-Prd = Pr1 - Pr2
+    def connect_to_ap(self, ap_id):
+        self.connected_ap = ap_id
 
-Ptd = Prd + 20 * math.log10(4 * math.pi / c) + 20 * math.log10(f) + 20 * math.log10(d)
+    def __repr__(self):
+        return f"Host({self.name}, X={self.x}, Y={self.y}, Connected AP={self.connected_ap})"
 
-RSSd = 10*math.log10(Ptd)
+# 实例化AP和Host对象
+APs = {
+    "AP1": AP("AP1", 100, 200),
+    "AP2": AP("AP2", 150, 250)
+}
 
-print(Ptd,RSSd)
+Hosts = {
+    1: Host("Host1", 105, 205),
+    2: Host("Host2", 110, 210),
+    3: Host("Host3", 115, 215),
+    4: Host("Host4", 155, 255),
+    5: Host("Host5", 160, 260)
+}
 
-import matplotlib.pyplot as plt
-import numpy as np
+# 建立连接
+APs["AP1"].connect_host(1)
+APs["AP1"].connect_host(2)
+APs["AP1"].connect_host(3)
+APs["AP2"].connect_host(4)
+APs["AP2"].connect_host(5)
 
-# Set temperature range
-temperatures = np.linspace(10, 40, 300)
-membership_no_water = []
-membership_water = []
+Hosts[1].connect_to_ap("AP1")
+Hosts[2].connect_to_ap("AP1")
+Hosts[3].connect_to_ap("AP1")
+Hosts[4].connect_to_ap("AP2")
+Hosts[5].connect_to_ap("AP2")
 
-# Calculate membership functions
-for temp in temperatures:
-    if temp <= 20:
-        membership_no_water.append(1)
-    elif 20 < temp < 30:
-        membership_no_water.append((30 - temp) / 10)  # Linear decrease
-    else:
-        membership_no_water.append(0)
-    
-    if temp >= 30:
-        membership_water.append(1)
-    elif 20 < temp < 30:
-        membership_water.append((temp - 20) / 10)  # Linear increase
-    else:
-        membership_water.append(0)
-
-# Plotting
-plt.figure(figsize=(8, 5))
-plt.plot(temperatures, membership_no_water, label='No Water Needed (Low Temperature)', color='blue')
-plt.plot(temperatures, membership_water, label='Water Needed (High Temperature)', color='red')
-plt.title('Fuzzy Logic Membership Functions for Watering Decision')
-plt.xlabel('Temperature (°C)')
-plt.ylabel('Membership Degree')
-plt.legend()
-plt.grid(True)
-plt.show()
+# 打印结构以验证
+print(APs)
+print(Hosts)
