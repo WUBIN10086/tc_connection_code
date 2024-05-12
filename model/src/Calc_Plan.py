@@ -27,11 +27,12 @@
 import csv
 import sys
 import pandas as pd
-import itertools
+import numpy as np
+from itertools import product
 import copy
 import datetime
 import time
-from throughput_estimation import calculate_throughput_estimate
+from throughput_estimation import calculate_throughput_estimate, Distance
 from concurrent_calc import calculate_srf
 from fairness_calc import Fairness_calc
 from fairness_index import calculate_fairness_index
@@ -111,27 +112,6 @@ write_to_file(f"Number of Hosts: {host_n}", output_filename)
 write_to_file(f"Number of APs: {AP_m}", output_filename)
 print("Read Devices number: Finished")
 
-# 存储所有的连接方式
-all_matrices = []
-
-for combination in itertools.product([0, 1], repeat=host_n * AP_m):
-    matrix = [list(combination[i:i+AP_m]) for i in range(0, host_n * AP_m, AP_m)]
-
-    # 筛选条件1：删除包含 1 多于一个的行
-    if all(row.count(1) <= 1 for row in matrix):
-        # 筛选条件2：检查每一列是否至少有一个 1
-        if all(any(row[j] == 1 for row in matrix) for j in range(AP_m)):
-            # 筛选条件3：检查每一行是否至少有一个 1
-            if all(1 in row for row in matrix):
-                all_matrices.append(matrix)
-write_to_file(f"----------------------", output_filename)
-write_to_file(f"Connection number: {len(all_matrices)}", output_filename)
-print("Connection Assignment: Finished")
-#---------------------------------------------------------------------
-
-
-
-#---------------------------------------------------------------------
 # 创建两个空数组用于存储AP和Host的坐标
 ap_coordinates = []
 host_coordinates = []
@@ -163,6 +143,67 @@ for host in host_coordinates:
 write_to_file("======================", output_filename)
 print("Read Devices Location: Finished")
 
+# 更新了筛选方式：
+# 初始化存储所有的连接方式
+def valid_matrix(matrix):
+    # 筛选条件1: 每行最多一个1
+    if np.all(matrix.sum(axis=1) <= 1):
+        # 筛选条件2: 每列至少一个1
+        if np.all(matrix.sum(axis=0) >= 1):
+            # 筛选条件3: 每行至少一个1
+            if np.all(matrix.sum(axis=1) >= 1):
+                return True
+    return False
+
+def generate_valid_matrices(host_n, AP_m):
+    all_matrices = []
+    for combination in product([0, 1], repeat=host_n * AP_m):
+        matrix = np.array(combination).reshape(host_n, AP_m)
+        if valid_matrix(matrix):
+            all_matrices.append(matrix)
+    return all_matrices
+
+all_matrices = generate_valid_matrices(host_n, AP_m)
+write_to_file(f"----------------------", output_filename)
+write_to_file(f"Connection number: {len(all_matrices)}", output_filename)
+print("Inti Connection Assignment: Finished")
+#---------------------------------------------------------------------
+
+def calculate_all_distances_and_find_max(hosts, aps):
+    distances = {}
+    max_distance = 0
+    max_pair = None
+
+    for host_name, host_x, host_y in hosts:
+        for ap_name, ap_x, ap_y in aps:
+            key = (host_name, ap_name)
+            dist = Distance(host_x, host_y, ap_x, ap_y)
+            distances[key] = dist
+            if dist > max_distance:
+                max_distance = dist
+                max_pair = key
+
+    return distances, max_distance, max_pair
+
+# 寻找最远距离的组合:
+distances, max_distance, max_pair = calculate_all_distances_and_find_max(host_coordinates, ap_coordinates)
+print(f"The maximum distance is {max_distance:.2f} units between {max_pair[0]} and {max_pair[1]}.")
+
+# 删除最远距离的组合:
+host_names = [name for name, x, y in host_coordinates]  # List of host names
+ap_names = [name for name, x, y in ap_coordinates]  # List of AP names
+host_name, ap_name = max_pair
+host_index = host_names.index(host_name)
+ap_index = ap_names.index(ap_name)
+filtered_matrices = [
+    matrix for matrix in all_matrices if matrix[host_index][ap_index] == 0
+]
+print(f"Number of valid matrices after filtering: {len(filtered_matrices)}")
+write_to_file(f"New Connection number after Distance filter: {len(filtered_matrices)}", output_filename)
+
+
+
+#---------------------------------------------------------------------
 # nk = [1, 2]  # 根据需要提供 nk 的值
 # nk 为AP和Host之间各种墙面的影响数量
 # corridor wall for W1, 
@@ -185,6 +226,8 @@ results = [[0.0] * num_aps for _ in range(num_hosts)]
 walls_data = pd.read_csv(Walls_csv_path)
 
 def get_wall_info(ap_name, host_name):
+    # print(walls_data['AP_Name'].dtype)
+    # print(walls_data['AP_Name'])
     wall_info = walls_data[(walls_data['AP_Name'] == ap_name) & (walls_data['Host_Name'] == host_name)]
     if not wall_info.empty:
         nk = wall_info.iloc[0, 2:].tolist()  # Accessing columns directly
@@ -197,6 +240,7 @@ def get_wall_info(ap_name, host_name):
 for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
     for j, (ap_name, ap_x, ap_y) in enumerate(ap_coordinates):
         # 查找墙面信息
+        # print(type(ap_name))
         nk = get_wall_info(ap_name, host_name)
         # 双括号表示参数是一个元组（tuple），而非单个字符串
         if ap_name.endswith(("2")):
@@ -270,6 +314,9 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
 #---------------------------------------------------------------------
 print("Single Throughput Calculated")
 
+
+
+
 #---------------------------------------------------------------------
 # 决定连接方案从而决定同时连接的数量m
 # concurrent throughput calc.
@@ -277,7 +324,7 @@ print("Single Throughput Calculated")
 write_to_file("======================", output_filename)
 write_to_file("Connection assignments", output_filename)
 write_to_file("----------------------", output_filename)
-for i, matrix in enumerate(all_matrices):
+for i, matrix in enumerate(filtered_matrices):
     write_to_file(f"Connection {i + 1}:", output_filename)
     for row in matrix:
         write_to_file(f"{row}", output_filename)
@@ -289,7 +336,7 @@ write_to_file("----------------------", output_filename)
 all_con_results = []
 # 遍历所有的链接情况
 # 更新results
-for matrix in all_matrices:
+for matrix in filtered_matrices:
     con_results = copy.deepcopy(results)
     # 对于一种连接方式的每一列
     # 代表着遍历每个AP连接的Host数量
@@ -325,7 +372,7 @@ print("Concurrent Throughput Calculated")
 # 计算Fairness target throughput
 connect_index = 0
 all_fair_results = []
-for matrix in all_matrices:
+for matrix in filtered_matrices:
     fair_results = [[0] * AP_m for _ in range(host_n)]
     for j in range(AP_m):
         fair_S = []
@@ -373,6 +420,28 @@ for i, fair_results in enumerate(all_fair_results):
 #---------------------------------------------------------------------
 print("Fairness index Calculated")
 
+#---------------------------------------------------------------------
+# 删除fairness index小于0.8的组合
+# Filtering fairness index less than 0.8
+filtered_matrices_by_fairness = []
+filtered_fairness_indexes = []
+filtered_fair_results = []
+
+for i, fairness_value in enumerate(all_fairness_index):
+    if fairness_value >= 0.8:
+        filtered_matrices_by_fairness.append(filtered_matrices[i])
+        filtered_fairness_indexes.append(fairness_value)
+        filtered_fair_results.append(all_fair_results[i])
+
+# Update filtered_matrices to only include those that passed the fairness filter
+filtered_matrices = filtered_matrices_by_fairness
+all_fair_results = filtered_fair_results
+all_fairness_index = filtered_fairness_indexes
+
+print(f"Number of valid matrices after filtering by fairness index: {len(filtered_matrices)}")
+write_to_file(f"Filtered Connection number after Fairness filter: {len(filtered_matrices)}", output_filename)
+#---------------------------------------------------------------------
+
 
 #---------------------------------------------------------------------
 # 排序寻找最佳的连接方式
@@ -382,99 +451,87 @@ print("Fairness index Calculated")
 
 best_connections = []
 
-# 根据结果确定权重，初始化权重
-W_1 = 0
-W_2 = 0
-
-# 判断总吞吐量的离散程度
-# 由于吞吐量在实际测量中存在上下波动，
-# 如果总吞吐量相差只有1或者2的话实际上不同的连接方式最后测量的结果相差不大
-# 若吞吐量相差不大的话则优先考虑公平性指数，如果总吞吐量相差过大则优先考虑吞吐量大小
-'''
-総スループットの分散を判断する
-実際の測定ではスループットは上下に変動するため、
-たとえば、総スループットの差が1か2しかない場合、異なる接続方法の間で最終的な測定値に大きな差は生じない。
-スループットの差が小さい場合は公平性指標を優先し、
-総スループットの差が大きすぎる場合はスループットサイズを優先する。
-'''
-
+# W_1 = 0
+# W_2 = 0
 
 # 计算每种连接方式下的总吞吐量大小
-all_totals =[]
-for i, fair_results in enumerate(all_fair_results):
-    total = 0
-    for sub_list in fair_results:
-        total += sum(sub_list)
+all_totals = []
+for fair_results in filtered_fair_results:
+    total = sum(sum(sub_list) for sub_list in fair_results)
     all_totals.append(total)
 
-# 计算所有连接方式的数量
-connection_num = len(all_matrices)
+# # 计算均值和差异，调整权重
+# mean_throughput = sum(all_totals) / len(all_totals)
+# deviations = [abs(total - mean_throughput) for total in all_totals]
 
-# 指定阈值
-# 阈值根据连接数量进行调整，假设一个Host大约上下浮动3Mbps左右
-impact_threshold = host_n * 3
+# # 判断吞吐量差异是否在阈值内
+# threshold = host_n * 3  # 假设一个Host大约上下浮动3Mbps左右
+# if all(deviation <= threshold for deviation in deviations):
+#     W_2 = 0.3
+# else:
+#     W_2 = 0.7
+# W_1 = 1 - W_2
 
-def categorize_throughput(data, threshold):
-    # 计算均值
-    mean_throughput = sum(data) / len(data)
-    cont = 0
-    # 遍历吞吐量数据
-    for value in data:
-        # 计算吞吐量与均值的差值
-        difference = abs(value - mean_throughput)
-        # 根据阈值判断类别
-        if difference <= threshold:
-            cont += 1
-        else:
-            cont -= 1
-    # 如果大部分（80%）的连接情况下，吞吐量相差不大，则优先考虑公平性指数
-    if cont >= connection_num * 0.8:
-        return True
+def calculate_variance(data):
+    return np.var(data)
 
-# 调用均值计算函数
-throughput_data = all_totals
-if categorize_throughput(throughput_data, impact_threshold):
-    W_2 = 0.3
-else:
-    W_2 = 0.7
+def fuzzy_weight(variance, high_threshold, low_threshold):
+    # Determine degrees of membership
+    if variance < low_threshold:
+        fairness_high = 1
+        throughput_high = 0
+    elif variance > high_threshold:
+        fairness_high = 0
+        throughput_high = 1
+    else:
+        # Linear interpolation between thresholds
+        fairness_high = (high_threshold - variance) / (high_threshold - low_threshold)
+        throughput_high = (variance - low_threshold) / (high_threshold - low_threshold)
+    
+    # Use the membership values to set weights
+    W_1 = fairness_high  # Weight for fairness
+    W_2 = throughput_high  # Weight for throughput
+    return W_1, W_2
 
-W_1 = 1 - W_2
+# Calculate variance of the throughput data
+variance = calculate_variance(all_totals)
 
-#write_to_file()
+# Set thresholds for what you consider low and high variance
+low_threshold = host_n * 1.5  # Adjust as needed
+high_threshold = host_n * 5  # Adjust as needed
+
+# Get weights using the fuzzy logic function
+W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
+
 write_to_file(f"Judgement weight: Fairness index: {W_1:.2f}, Total throughput: {W_2:.2f}", output_filename)
 print("Judgement weigth: Fairness index: {:.2f}, Total throughput: {:.2f}".format(W_1, W_2))
 
-# 归一化函数
 def normalize(data):
     """
-    对数据进行归一化处理，使其范围在0到1之间。
-    :param data: 一个数字列表。
-    :return: 归一化后的数据列表。
+    Normalize the data to make it range between 0 and 1.
+    :param data: List of numeric values.
+    :return: List of normalized values.
     """
     min_val = min(data)
     max_val = max(data)
+    if max_val - min_val == 0:  # Avoid division by zero if all values are the same
+        return [1] * len(data)
     return [(x - min_val) / (max_val - min_val) for x in data]
 
 # 归一化总吞吐量
 normalized_totals = normalize(all_totals)
 
-for i, fair_results in enumerate(all_fair_results):
-    total = 0
-    for sub_list in fair_results:
-        total += sum(sub_list)
-    
-    # 使用归一化的总吞吐量
-    normalized_total = normalized_totals[i]
-    fair_index = all_fairness_index[i]
-    # 计算综合得分，使用归一化的总吞吐量
-    score = ( W_1 * fair_index + W_2 * normalized_total) * 100
-    best_connections.append((i, score, fair_index, total))
+# 综合评分
+for i, (fairness_index, total, normalized_total) in enumerate(zip(filtered_fairness_indexes, all_totals, normalized_totals)):
+    score = (W_1 * fairness_index + W_2 * normalized_total) * 100
+    best_connections.append((i, score, fairness_index, total))
 
-# 根据得分降序排序
-best_connections.sort(key=lambda x: x[1], reverse=True)  
+# 排序
+best_connections.sort(key=lambda x: x[1], reverse=True)
 
-middle_index = len(best_connections) // 2  # 中间索引
-worst_index = -1  # 最差连接索引
+# 处理中间和最差连接
+middle_index = len(best_connections) // 2
+worst_index = -1
 
 write_to_file("======================", output_filename)
 #write_to_file()
@@ -487,6 +544,9 @@ for i, (index, score, fairness_index, total) in enumerate(best_connections[:3]):
     write_to_file(f"Connection {index + 1}:", output_filename)
     for row in all_matrices[index]:
         write_to_file(f"{row}", output_filename)
+    write_to_file(f"Connection {index + 1} Results:", output_filename)
+    write_to_file(f"{all_fair_results[index]}", output_filename)
+    write_to_file("--------------------------", output_filename)
     #write_to_file()
 write_to_file("======================", output_filename)
 
@@ -510,16 +570,12 @@ if worst_index == -1:
         write_to_file(f"{row}", output_filename)
     write_to_file("======================", output_filename)
 
-#---------------------------------------------------------------------
-# 输出代码运行时间
-# 记录结束时间
+# 结束程序，输出执行时间
 end_time = time.time()
-# 计算代码执行时间
 execution_time = end_time - start_time
-write_to_file(f"Code executed in {execution_time:.2f} seconds", output_filename)
 write_to_file("======================", output_filename)
+write_to_file(f"Code executed in {execution_time:.2f} seconds", output_filename)
 print("Procedure Finished!!!")
-
 #---------------------------------------------------------------------
 #output_file.close()
 #sys.stdout = sys.__stdout__
