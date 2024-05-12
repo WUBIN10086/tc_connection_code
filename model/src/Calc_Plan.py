@@ -66,9 +66,9 @@ from write_to_output import write_to_file, clear_output_file
 # Location_csv_path = sys.argv[1]
 # output_filename = sys.argv[2]
 # Walls_csv_path = sys.argv[3]
-Location_csv_path = 'model\Location\Exp2\Eng_Location.csv'
-output_filename = "2.txt"
-Walls_csv_path = 'model\Location\Exp2\Walls.csv'
+Location_csv_path = 'model/Location/Exp1/After avtive AP/Eng_Location.csv'
+output_filename = "Topology_1.txt"
+Walls_csv_path = 'model/Location/Exp1/After avtive AP/Walls.csv'
 
 # 记录开始时间
 start_time = time.time()

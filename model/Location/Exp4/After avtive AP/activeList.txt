@@ -1,0 +1,13 @@
+After optimization
+
+List of Active AP=3
+
+List of Active AP=4
+
+List of Active AP=7
+
+List of Active AP=8
+
+List of Active AP=9
+
+List of Active AP=10
