@@ -44,11 +44,15 @@ class Host:
         self.x = x
         self.y = y
         self.connected_ap = None
+        self.speed = None
     def connect_to_ap(self, ap_id):
         self.connected_ap = ap_id
     def __repr__(self):
-        return f"Host({self.name}, X={self.x}, Y={self.y}, Connected AP={self.connected_ap})"
+        return f"Host({self.name}, X={self.x}, Y={self.y}, Connected AP={self.connected_ap}, speed={self.speed})"
 
+# 设定循环次数
+LOOP_COUNT = 1000
+PRO_OF_MUTATION = 0.1
 #============================================================================
 # Read command-line arguments
 # Location_csv_path = sys.argv[1]
@@ -130,6 +134,11 @@ def load_parameters(file_path):
     return parameters
 
 # 初始化连接分配：
+# 初始化连接分配中加入了预筛选减少搜索空间：
+# 1. 距离准则，排除距离太远的连接
+# 2. 排除每个AP连接过多的host
+# 3. 保证每个Host只连接到一个AP
+# 4. 保证每个AP都有Host连接
 def initialize_population(size, hosts, aps, max_ap_connection_num):
     # Size为初始循环次数
     # hosts和aps为存储信息的字典
@@ -145,30 +154,220 @@ def initialize_population(size, hosts, aps, max_ap_connection_num):
             distance_matrix[ap_name][host_name] = distance
         # 找到与此AP距离最远的Host
         max_distance_host[ap_name] = max(distance_matrix[ap_name], key=distance_matrix[ap_name].get)
+    
     # 初始化种群
     for _ in range(size):
-        individual = {}
+        individual = {ap_name: [] for ap_name in aps.keys()}  # 每个AP初始化空列表
+        available_hosts = list(hosts.keys())  # 所有可用的Hosts
+
+        # 移除每个AP的最远Host
         for ap_name in aps.keys():
-            available_hosts = list(hosts.keys())
-            # 排除最远的Host
-            available_hosts.remove(max_distance_host[ap_name])
-            # 随机选择一定数量的Host连接到此AP，但不超过max_hosts_per_ap
-            individual[ap_name] = random.sample(available_hosts, min(len(available_hosts), max_hosts_per_ap))
+            if max_distance_host[ap_name] in available_hosts:
+                available_hosts.remove(max_distance_host[ap_name])
+
+        # 随机打乱Host列表和AP列表
+        random.shuffle(available_hosts)
+        ap_order = list(aps.keys()) * max_hosts_per_ap
+        random.shuffle(ap_order)
+
+        # 优先保证每个AP至少连接一个Host
+        for ap_name in aps.keys():
+            for host in available_hosts:
+                if len(individual[ap_name]) < 1:  # 确保至少有一个Host
+                    individual[ap_name].append(host)
+                    available_hosts.remove(host)
+                    break
+
+        # 继续分配剩余的Host
+        for host in available_hosts:
+            for ap_name in ap_order:
+                if len(individual[ap_name]) < max_hosts_per_ap:
+                    individual[ap_name].append(host)
+                    available_hosts.remove(host)
+                    break
+
         population.append(individual)
-    return population
+    return population,distance_matrix,max_distance_host
+# 这里返回值是是所有连接方式的种群
+# 其中的individual形式是字典，一代里面包含每个AP的名字，以及对应连接的Host的名字 
 
 # # 计算个体的适应度
+def fitness(individual, Single_throughput, hosts):
+    total_throughput = 0
+    throughput_list = []
+    # 计算fairness target大小
+    # 1. 计算同时连接数量：
+    for ap, connected_hosts in individual.items():
+        concurrent_num = len(connected_hosts)
+        srf = calculate_srf(concurrent_num)
+        S = []
+        C = []
+        # 2. 计算fairness target大小
+        for index, host in enumerate(connected_hosts):
+            S.append(Single_throughput[(host, ap)])
+            concurrent_throughput = srf * Single_throughput[(host, ap)]
+            C.append(concurrent_throughput)
+        Fairness_target = Fairness_calc(concurrent_num,S,C)
+        sum = concurrent_num * Fairness_target
+        for index, host in enumerate(connected_hosts):
+            hosts[host].speed = Fairness_target
+            hosts[host].connected_ap = ap
+            throughput_list.append(hosts[host].speed) 
+        total_throughput += sum
+    # 计算Fairness index
+    fairness_index = calculate_jains_fairness_index(throughput_list)
+
+    return fairness_index, total_throughput
+
+def fuzzy_weight(variance, high_threshold, low_threshold):
+    # Determine degrees of membership
+    if variance < low_threshold:
+        fairness_high = 1
+        throughput_high = 0
+    elif variance > high_threshold:
+        fairness_high = 0
+        throughput_high = 1
+    else:
+        # Linear interpolation between thresholds
+        fairness_high = (high_threshold - variance) / (high_threshold - low_threshold)
+        throughput_high = (variance - low_threshold) / (high_threshold - low_threshold)
+    
+    # Use the membership values to set weights
+    W_1 = fairness_high  # Weight for fairness
+    W_2 = throughput_high  # Weight for throughput
+    return W_1, W_2
+
+def calculate_variance(values):
+    mean = sum(values) / len(values)
+    return sum((x - mean) ** 2 for x in values) / len(values)
+
+# 归一化函数
+def normalize(data):
+    """
+    Normalize the data to make it range between 0 and 1.
+    :param data: List of numeric values.
+    :return: List of normalized values.
+    """
+    min_val = min(data)
+    max_val = max(data)
+    if max_val - min_val == 0:  # Avoid division by zero if all values are the same
+        return [1] * len(data)
+    return [(x - min_val) / (max_val - min_val) for x in data]
+
+def calculate_jains_fairness_index(throughputs):
+    if not throughputs:  # Ensure the list is not empty
+        return 0
+    num_users = len(throughputs)
+    sum_of_throughputs = sum(throughputs)
+    sum_of_squares = sum(x ** 2 for x in throughputs)
+    if sum_of_squares == 0:  # Prevent division by zero
+        return 0
+    fairness_index = (sum_of_throughputs ** 2) / (num_users * sum_of_squares)
+    return fairness_index
+
+def mutate(individual, hosts, aps, distance_matrix, max_hosts_per_ap, max_distance_host):
+    save = individual
+    for ap in individual:
+        if random.random() < PRO_OF_MUTATION:
+            possible_hosts = [h for h in hosts if distance_matrix[ap][h] < distance_matrix[ap][max_distance_host[ap]]]
+            if possible_hosts:  # 确保有可用主机才进行抽样
+                individual[ap] = random.sample(possible_hosts, min(len(possible_hosts), max_hosts_per_ap))
+            else:
+                print(f"No available hosts to mutate for AP {ap}")
+    if not judge_individual(individual, hosts):
+        # print("Failed to create a valid individual. Trying again...")
+        return mutate(save, hosts, aps, distance_matrix, max_hosts_per_ap, max_distance_host)
+    return individual
+
+def judge_individual(individual, hosts):
+    all_hosts = set(hosts.keys())  # 所有Host的集合
+    used_hosts = set()  # 已经连接的Hosts集合
+    valid_individual = True  # 假设方案是有效的
+
+    # 确保每个AP至少连接一个Host
+    for ap, connected_hosts in individual.items():
+        if not connected_hosts:  # 如果AP没有连接任何Host
+            valid_individual = False
+            continue
+        else:
+            # 检查已连接的Host是否有重复
+            for host in connected_hosts:
+                if host in used_hosts:
+                    # print(f"Host {host} is already connected to another AP.")
+                    valid_individual = False
+                else:
+                    continue
+
+    # 检查是否每个Host都已经被至少一个AP连接
+    if used_hosts != all_hosts:
+        # print("Not all hosts are connected.")
+        valid_individual = False
+
+    # 如果方案无效，清空individual
+
+    return valid_individual
+
+
+def crossover(parent1, parent2, aps, hosts, distance_matrix, max_hosts_per_ap):
+    child = {}
+    for ap in aps:
+        if random.random() > 0.5:
+            chosen_host = parent1[ap][:]  # 创建副本以避免直接修改父代
+        else:
+            chosen_host = parent2[ap][:]  # 创建副本以避免直接修改父代
+
+        # 确保不超过最大连接数
+        if len(chosen_host) > max_hosts_per_ap:
+            chosen_host = random.sample(chosen_host, max_hosts_per_ap)
+        child[ap] = chosen_host
+
+    # 调整个体，确保符合所有规则
+    if not judge_individual(child, hosts):
+        # print("Failed to create a valid individual. Trying again...")
+        return crossover(parent1, parent2, aps, hosts, distance_matrix, max_hosts_per_ap)
+    return child
 
 
 # 遗传算法函数
-def genetic_algorithm(hosts, aps, population_size, generations, max_ap_connetion_num):
-    population = initialize_population(population_size, hosts, aps, max_ap_connetion_num)
-    
+def genetic_algorithm(hosts, aps, population_size, generations, max_ap_connetion_num, Single_throughput):
+    distance_matrix = {ap_name: {host_name: Distance(aps[ap_name].x, aps[ap_name].y, hosts[host_name].x, hosts[host_name].y) for host_name in hosts} for ap_name in aps}
+    max_distance_host = {ap: max(distance_matrix[ap], key=distance_matrix[ap].get) for ap in aps}
+    population,distance_matrix,max_distance_host = initialize_population(population_size, hosts, aps, max_ap_connetion_num)
+    for _ in range(generations):
+        print("Generation: ",_)
+        print("------------------")
+        scores = []
+        throughput_values = [fitness(ind, Single_throughput, hosts)[1] for ind in population]
+        normalized_throughput = normalize(throughput_values)
+        variance = calculate_variance(throughput_values)
+        low_threshold = host_n * 1.5
+        high_threshold = host_n * 5
+        W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
+
+        for ind, norm_tp in zip(population, normalized_throughput):
+            fi, _ = fitness(ind, Single_throughput, hosts)
+            score = W_1 * fi + W_2 * norm_tp
+            scores.append((ind, score))
+
+        # 根据计算得出的得分进行排序
+        scores.sort(key=lambda x: x[1], reverse=True)
+        population = [x[0] for x in scores]  # 更新population为排序后的个体
+        next_generation = population[:2]  # 精英主义
+        while len(next_generation) < population_size:
+            parent1, parent2 = random.sample(population[:10], 2)  # 锦标赛选择
+            child = crossover(parent1, parent2, aps, hosts, distance_matrix, max_ap_connetion_num)
+            mutate(child, hosts, aps, distance_matrix, max_ap_connetion_num, max_distance_host)
+            next_generation.append(child)
+        population = next_generation
+
     return population[0]
+
 
 # Main函数部分
 #============================================================================
 def main():
+    # 记录开始时间
+    start_time = time.time()
     global host_n
     global AP_m
     host_n = 0 # 初始化
@@ -239,12 +438,38 @@ def main():
     max_ap_connetion_num = math.floor(host_n * 0.8)
     generations = 100
     population_size = LOOP_COUNT
-    best_setup = genetic_algorithm(HostInfo, APInfo, population_size, generations, max_ap_connetion_num )
-    # 设定循环次数
-    LOOP_COUNT = 1000
-
-
-
+    best_setup = genetic_algorithm(HostInfo, APInfo, population_size, generations, max_ap_connetion_num, Single_throughput)
+    execution_time = time.time() - start_time
+    # 将最佳设置写入输出文件
+    write_to_file("----------------------", output_filename)
+    write_to_file(f"Best Setup:", output_filename)
+    # 输出结果：
+    throughput_list = []
+    a = 0
+    for ap, connected_hosts in best_setup.items():
+        concurrent_num = len(connected_hosts)
+        srf = calculate_srf(concurrent_num)
+        S = []
+        C = []
+        for host in connected_hosts:
+            S.append(Single_throughput[(host, ap)])
+            concurrent_throughput = srf * Single_throughput[(host, ap)]
+            C.append(concurrent_throughput)
+        Fairness_target = Fairness_calc(concurrent_num, S, C)
+        sum_throughput = concurrent_num * Fairness_target
+        a += sum_throughput
+        write_to_file(f"AP: {ap} connects to hosts {connected_hosts}\n"
+                       f"Fairness_target: {Fairness_target:.3f}\n", output_filename)
+        for index, host in enumerate(connected_hosts):
+            throughput_list.append(HostInfo[host].speed) 
+    # 计算Fairness index
+    write_to_file("----------------------", output_filename)
+    fairness_index = calculate_jains_fairness_index(throughput_list)
+    write_to_file(f"Fairness index: {fairness_index}", output_filename)
+    write_to_file("----------------------", output_filename)
+    write_to_file(f"Total throughput: {a}", output_filename)
+    write_to_file(f"Code executed in {execution_time:.2f} seconds", output_filename)
+    print("Procedure Finished!!!")
 
 if __name__ == "__main__":
     main()
