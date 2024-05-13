@@ -51,16 +51,19 @@ class Host:
         return f"Host({self.name}, X={self.x}, Y={self.y}, Connected AP={self.connected_ap}, speed={self.speed})"
 
 # 设定循环次数
-LOOP_COUNT = 1000
-PRO_OF_MUTATION = 0.1
+POPULATION_NUM = 1000
+PRO_OF_MUTATION = 0.12
+GENERATION_COUNT = 2000
 #============================================================================
 # Read command-line arguments
 # Location_csv_path = sys.argv[1]
 # output_filename = sys.argv[2]
 # Walls_csv_path = sys.argv[3]
-Location_csv_path = 'model/Location/Exp1/After avtive AP/Eng_Location.csv'
-output_filename = "Topology_1.txt"
-Walls_csv_path = 'model/Location/Exp1/After avtive AP/Walls.csv'
+# Location_csv_path = 'model/Location/Exp2/After avtive AP/Eng_Location.csv'
+Location_csv_path = 'model/Location/Exp4/After avtive AP/Gra_Location.csv'
+output_filename = "Topology_4_4.txt"
+Walls_csv_path = 'model/Location/Exp4/After avtive AP/Walls.csv'
+# random.seed = 50
 #============================================================================
 
 
@@ -153,8 +156,10 @@ def initialize_population(size, hosts, aps, max_ap_connection_num):
             distance = Distance(ap.x, ap.y, host.x, host.y)
             distance_matrix[ap_name][host_name] = distance
         # 找到与此AP距离最远的Host
-        max_distance_host[ap_name] = max(distance_matrix[ap_name], key=distance_matrix[ap_name].get)
-    
+        # 找到与此AP距离最远的Host，并存储host名和距离
+        furthest_host = max(distance_matrix[ap_name], key=distance_matrix[ap_name].get)
+        max_distance = distance_matrix[ap_name][furthest_host]
+        max_distance_host[ap_name] = (furthest_host, max_distance)
     # 初始化种群
     for _ in range(size):
         individual = {ap_name: [] for ap_name in aps.keys()}  # 每个AP初始化空列表
@@ -187,7 +192,7 @@ def initialize_population(size, hosts, aps, max_ap_connection_num):
                     break
 
         population.append(individual)
-    return population,distance_matrix,max_distance_host
+    return population,distance_matrix,max_distance_host,max_distance
 # 这里返回值是是所有连接方式的种群
 # 其中的individual形式是字典，一代里面包含每个AP的名字，以及对应连接的Host的名字 
 
@@ -265,74 +270,91 @@ def calculate_jains_fairness_index(throughputs):
     fairness_index = (sum_of_throughputs ** 2) / (num_users * sum_of_squares)
     return fairness_index
 
-def mutate(individual, hosts, aps, distance_matrix, max_hosts_per_ap, max_distance_host):
-    save = individual
-    for ap in individual:
-        if random.random() < PRO_OF_MUTATION:
-            possible_hosts = [h for h in hosts if distance_matrix[ap][h] < distance_matrix[ap][max_distance_host[ap]]]
-            if possible_hosts:  # 确保有可用主机才进行抽样
-                individual[ap] = random.sample(possible_hosts, min(len(possible_hosts), max_hosts_per_ap))
-            else:
-                print(f"No available hosts to mutate for AP {ap}")
-    if not judge_individual(individual, hosts):
-        # print("Failed to create a valid individual. Trying again...")
-        return mutate(save, hosts, aps, distance_matrix, max_hosts_per_ap, max_distance_host)
-    return individual
-
-def judge_individual(individual, hosts):
-    all_hosts = set(hosts.keys())  # 所有Host的集合
-    used_hosts = set()  # 已经连接的Hosts集合
-    valid_individual = True  # 假设方案是有效的
-
-    # 确保每个AP至少连接一个Host
-    for ap, connected_hosts in individual.items():
-        if not connected_hosts:  # 如果AP没有连接任何Host
-            valid_individual = False
-            continue
-        else:
-            # 检查已连接的Host是否有重复
-            for host in connected_hosts:
-                if host in used_hosts:
-                    # print(f"Host {host} is already connected to another AP.")
-                    valid_individual = False
-                else:
-                    continue
-
-    # 检查是否每个Host都已经被至少一个AP连接
-    if used_hosts != all_hosts:
-        # print("Not all hosts are connected.")
-        valid_individual = False
-
-    # 如果方案无效，清空individual
-
-    return valid_individual
-
-
 def crossover(parent1, parent2, aps, hosts, distance_matrix, max_hosts_per_ap):
-    child = {}
+    child = {ap: [] for ap in aps}
+    unassigned_hosts = set(hosts)  # Initialize all hosts as unassigned
+
+    # First, prioritize host assignment based on combined parental preference
     for ap in aps:
-        if random.random() > 0.5:
-            chosen_host = parent1[ap][:]  # 创建副本以避免直接修改父代
-        else:
-            chosen_host = parent2[ap][:]  # 创建副本以避免直接修改父代
+        preferred_hosts = list(set(parent1[ap] + parent2[ap]))
+        random.shuffle(preferred_hosts)  # Shuffle to introduce some random selection
 
-        # 确保不超过最大连接数
-        if len(chosen_host) > max_hosts_per_ap:
-            chosen_host = random.sample(chosen_host, max_hosts_per_ap)
-        child[ap] = chosen_host
+        for host in preferred_hosts:
+            if host in unassigned_hosts and len(child[ap]) < max_hosts_per_ap:
+                child[ap].append(host)
+                unassigned_hosts.remove(host)
 
-    # 调整个体，确保符合所有规则
-    if not judge_individual(child, hosts):
-        # print("Failed to create a valid individual. Trying again...")
-        return crossover(parent1, parent2, aps, hosts, distance_matrix, max_hosts_per_ap)
+    # Ensure every AP has at least one host
+    for ap in aps:
+        if not child[ap]:  # If this AP has no hosts yet
+            if unassigned_hosts:
+                # Assign the nearest available host to ensure geographic preference
+                nearest_host = min(unassigned_hosts, key=lambda host: distance_matrix[ap][host])
+                child[ap].append(nearest_host)
+                unassigned_hosts.remove(nearest_host)
+
+    # If there are still unassigned hosts, distribute them among the APs that can take more
+    for host in list(unassigned_hosts):  # Iterate over a list copy since we're modifying the set
+        aps_with_capacity = [ap for ap in aps if len(child[ap]) < max_hosts_per_ap]
+        if aps_with_capacity:
+            # Assign host to the AP where it fits based on capacity and proximity
+            ap_to_assign = min(aps_with_capacity, key=lambda ap: distance_matrix[ap][host])
+            child[ap_to_assign].append(host)
+            unassigned_hosts.remove(host)
+
+    # Double-check and handle rare case where an AP might still not have any hosts
+    if any(len(child[ap]) == 0 for ap in aps):
+        for ap in aps:
+            if len(child[ap]) == 0:
+                # Find an AP to borrow a host from; choose the one with the most hosts
+                donor_ap = max((a for a in aps if len(child[a]) > 1), key=lambda a: len(child[a]), default=None)
+                if donor_ap:
+                    # Move one host from the donor to the needy AP
+                    host_to_move = child[donor_ap].pop()
+                    child[ap].append(host_to_move)
+
     return child
+
+def mutate(individual, hosts, aps, distance_matrix, max_hosts_per_ap, max_distance_host):
+    if random.random() < PRO_OF_MUTATION:
+        muta_individual = {ap_name: [] for ap_name in aps.keys()}  # 每个AP初始化空列表
+        available_hosts = list(hosts.keys())  # 所有可用的Hosts
+        individual = muta_individual
+        # 移除每个AP的最远Host
+        for ap_name in aps.keys():
+            if max_distance_host[ap_name] in available_hosts:
+                available_hosts.remove(max_distance_host[ap_name])
+
+        # 随机打乱Host列表和AP列表
+        random.shuffle(available_hosts)
+        ap_order = list(aps.keys()) * max_hosts_per_ap
+        random.shuffle(ap_order)
+
+        # 优先保证每个AP至少连接一个Host
+        for ap_name in aps.keys():
+            for host in available_hosts:
+                if len(individual[ap_name]) < 1:  # 确保至少有一个Host
+                    individual[ap_name].append(host)
+                    available_hosts.remove(host)
+                    break
+
+        # 继续分配剩余的Host
+        for host in available_hosts:
+            for ap_name in ap_order:
+                if len(individual[ap_name]) < max_hosts_per_ap:
+                    individual[ap_name].append(host)
+                    available_hosts.remove(host)
+                    break
+    muta_individual = individual
+    return muta_individual
 
 
 # 遗传算法函数
 def genetic_algorithm(hosts, aps, population_size, generations, max_ap_connetion_num, Single_throughput):
     distance_matrix = {ap_name: {host_name: Distance(aps[ap_name].x, aps[ap_name].y, hosts[host_name].x, hosts[host_name].y) for host_name in hosts} for ap_name in aps}
     max_distance_host = {ap: max(distance_matrix[ap], key=distance_matrix[ap].get) for ap in aps}
-    population,distance_matrix,max_distance_host = initialize_population(population_size, hosts, aps, max_ap_connetion_num)
+    population,distance_matrix,max_distance_host,max_distance = initialize_population(population_size, hosts, aps, max_ap_connetion_num)
+
     for _ in range(generations):
         print("Generation: ",_)
         print("------------------")
@@ -340,10 +362,11 @@ def genetic_algorithm(hosts, aps, population_size, generations, max_ap_connetion
         throughput_values = [fitness(ind, Single_throughput, hosts)[1] for ind in population]
         normalized_throughput = normalize(throughput_values)
         variance = calculate_variance(throughput_values)
-        low_threshold = host_n * 1.5
-        high_threshold = host_n * 5
-        W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
-
+        low_threshold = host_n * 10
+        high_threshold = host_n * 15
+        # W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
+        W_1 = 0.9 
+        W_2 = 0.3
         for ind, norm_tp in zip(population, normalized_throughput):
             fi, _ = fitness(ind, Single_throughput, hosts)
             score = W_1 * fi + W_2 * norm_tp
@@ -416,7 +439,7 @@ def main():
         write_to_file("----------------------", output_filename)
         write_to_file(f"{ap_name}:", output_filename)
         for host_name, host in HostInfo.items():
-            if ap_name.endswith("_2"):  # 判断是否为5G接口
+            if ap_name.endswith("_1"):  # 判断是否为2.4G接口
                 parameters = load_parameters(parameters_24_path)
                 ap_coordinates = (ap.x, ap.y)
                 host_coordinates = (host.x, host.y)
@@ -436,8 +459,8 @@ def main():
 
     # 设定每个AP的最大连接Host数量： 
     max_ap_connetion_num = math.floor(host_n * 0.8)
-    generations = 100
-    population_size = LOOP_COUNT
+    generations = GENERATION_COUNT
+    population_size = POPULATION_NUM
     best_setup = genetic_algorithm(HostInfo, APInfo, population_size, generations, max_ap_connetion_num, Single_throughput)
     execution_time = time.time() - start_time
     # 将最佳设置写入输出文件

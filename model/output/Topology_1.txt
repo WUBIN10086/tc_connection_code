@@ -1,4 +1,4 @@
-Date and Time: 2024-05-14 00:05
+Date and Time: 2024-05-14 01:24
 ======================
 Devices number
 ----------------------
@@ -78,3 +78,28 @@ H7: 51.19
 H8: 38.14
 H9: 42.26
 H10: 18.17
+----------------------
+Best Setup:
+AP: AP1_1 connects to hosts ['H1', 'H3']
+Fairness_target: 45.770
+
+AP: AP1_2 connects to hosts ['H9', 'H2']
+Fairness_target: 22.790
+
+AP: AP3_1 connects to hosts ['H7', 'H8']
+Fairness_target: 56.230
+
+AP: AP3_2 connects to hosts ['H8', 'H5']
+Fairness_target: 21.850
+
+AP: AP5_1 connects to hosts ['H4', 'H7', 'H8']
+Fairness_target: 29.410
+
+AP: AP5_2 connects to hosts ['H7', 'H6']
+Fairness_target: 21.740
+
+----------------------
+Fairness index: 0.9813197992659072
+----------------------
+Total throughput: 424.99
+Code executed in 29.58 seconds
