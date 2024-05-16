@@ -196,7 +196,8 @@ def initialize_population(size, hosts, aps, max_ap_connection_num):
 # 这里返回值是是所有连接方式的种群
 # 其中的individual形式是字典，一代里面包含每个AP的名字，以及对应连接的Host的名字 
 
-# # 计算个体的适应度
+# 计算个体的适应度
+# 個々の適性の計算
 def fitness(individual, Single_throughput, hosts):
     total_throughput = 0
     throughput_list = []
@@ -247,6 +248,7 @@ def calculate_variance(values):
     return sum((x - mean) ** 2 for x in values) / len(values)
 
 # 归一化函数
+# 正規化関数
 def normalize(data):
     """
     Normalize the data to make it range between 0 and 1.
@@ -272,37 +274,37 @@ def calculate_jains_fairness_index(throughputs):
 
 def crossover(parent1, parent2, aps, hosts, distance_matrix, max_hosts_per_ap):
     child = {ap: [] for ap in aps}
-    unassigned_hosts = set(hosts)  # Initialize all hosts as unassigned
+    unassigned_hosts = set(hosts)  # 初始化所有host
 
-    # First, prioritize host assignment based on combined parental preference
+    # 首先，根据父代的综合偏好确定主机分配的优先次序
     for ap in aps:
         preferred_hosts = list(set(parent1[ap] + parent2[ap]))
-        random.shuffle(preferred_hosts)  # Shuffle to introduce some random selection
+        random.shuffle(preferred_hosts)  # 洗牌，引入一些随机选择
 
         for host in preferred_hosts:
             if host in unassigned_hosts and len(child[ap]) < max_hosts_per_ap:
                 child[ap].append(host)
                 unassigned_hosts.remove(host)
 
-    # Ensure every AP has at least one host
+    # 保证每个AP连接至少一个Host
     for ap in aps:
-        if not child[ap]:  # If this AP has no hosts yet
+        if not child[ap]:  # 如果AP未连接任何Host
             if unassigned_hosts:
-                # Assign the nearest available host to ensure geographic preference
+                # 分配最近的可用Host，确保距离位置优先
                 nearest_host = min(unassigned_hosts, key=lambda host: distance_matrix[ap][host])
                 child[ap].append(nearest_host)
                 unassigned_hosts.remove(nearest_host)
 
-    # If there are still unassigned hosts, distribute them among the APs that can take more
-    for host in list(unassigned_hosts):  # Iterate over a list copy since we're modifying the set
+    # 如果仍有未分配的Host，则将其分配给能接收更多Host的AP
+    for host in list(unassigned_hosts):  # 迭代列表副本 Iterate over a list copy since we're modifying the set
         aps_with_capacity = [ap for ap in aps if len(child[ap]) < max_hosts_per_ap]
         if aps_with_capacity:
-            # Assign host to the AP where it fits based on capacity and proximity
+            # 根据容量和邻近程度将Host分配给适合的接入点
             ap_to_assign = min(aps_with_capacity, key=lambda ap: distance_matrix[ap][host])
             child[ap_to_assign].append(host)
             unassigned_hosts.remove(host)
 
-    # Double-check and handle rare case where an AP might still not have any hosts
+    # 再次检查
     if any(len(child[ap]) == 0 for ap in aps):
         for ap in aps:
             if len(child[ap]) == 0:
@@ -362,17 +364,20 @@ def genetic_algorithm(hosts, aps, population_size, generations, max_ap_connetion
         throughput_values = [fitness(ind, Single_throughput, hosts)[1] for ind in population]
         normalized_throughput = normalize(throughput_values)
         variance = calculate_variance(throughput_values)
-        low_threshold = host_n * 10
-        high_threshold = host_n * 15
-        # W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
-        W_1 = 0.9 
-        W_2 = 0.3
+        low_threshold = host_n * 1.5
+        high_threshold = host_n * 8
+        # 使用模糊逻辑进行得分权重的判断
+        # # ファジーロジックを用いた得点の重み付け
+        W_1, W_2 = fuzzy_weight(variance, high_threshold, low_threshold)
+        # W_1 = 0.9 
+        # W_2 = 0.3
         for ind, norm_tp in zip(population, normalized_throughput):
             fi, _ = fitness(ind, Single_throughput, hosts)
             score = W_1 * fi + W_2 * norm_tp
             scores.append((ind, score))
 
-        # 根据计算得出的得分进行排序
+        # 根据计算得出的得分进行排序 
+        # 算出された得点に基づくランキング
         scores.sort(key=lambda x: x[1], reverse=True)
         population = [x[0] for x in scores]  # 更新population为排序后的个体
         next_generation = population[:2]  # 精英主义
@@ -395,6 +400,8 @@ def main():
     global AP_m
     host_n = 0 # 初始化
     AP_m = 0
+    # np.random.seed(0)
+    # random.seed(50)
     # 清理并写入初始数据到输出文件
     clear_output_file(output_filename)
     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
