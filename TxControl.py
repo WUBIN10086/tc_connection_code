@@ -219,7 +219,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                                     parameters[key] = list(map(float, value.split()))
 
                     p_1_initial = parameters['P_1']
-                    while p_1_initial > -55:
+                    while p_1_initial > -42:#5Ghz
                         parameters['P_1'] = p_1_initial
             # 计算主机与AP的距离
                         d = Distance(host_x, host_y, ap_x, ap_y)
@@ -235,7 +235,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                         write_to_file(f"{host_name} for {ap_name}: {result}, p_1:{p_1_initial}, p_t:{rounded_p_t}")
             # 在结果数组中保存该结果
                         results[host_index][ap_index] = result
-                        p_1_initial -= 2
+                        p_1_initial -= 1
                 else:
                     with open("parameters.txt", "r") as file:
                         parameters = {}
@@ -252,7 +252,7 @@ for matrix_index, connection_matrix in enumerate(all_matrices):
                                     parameters[key] = list(map(float, value.split()))
 
                     p_1_initial = parameters['P_1']
-                    while p_1_initial > -55:
+                    while p_1_initial > -58.9:#2.4Ghz
                         parameters['P_1'] = p_1_initial
                         d = Distance(host_x, host_y, ap_x, ap_y)
                         rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
