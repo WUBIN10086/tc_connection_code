@@ -1,5 +1,6 @@
-# parameters optimized by POT
+# parameters optimized by POT field 1
 # parameters for 5Ghz interfaces 2
+# T4UH CB
 alpha = 2.15
 
 # P_1 is throughput within 1m

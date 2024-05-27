@@ -1,0 +1,14 @@
+# parameters optimized by POT field 2
+# parameters for 5Ghz interfaces 2 T4UH
+alpha = 2
+
+# P_1 is throughput within 1m
+P_1 = -30.5
+
+# 7 types wall types(contain 0)
+Wk = 2.3 6.4 1.8 4.2 4.3 5.3
+
+# For throughput estimation
+a = 134.5
+b = 58.5
+c = 6.25

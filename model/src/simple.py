@@ -13,22 +13,25 @@ from fairness_index import calculate_fairness_index
 import copy
 
 # Load the CSV file
-Location_csv_path = 'model/Location/Exp4/Orignal Location/Gra_Location.csv'
-Walls_csv_path = 'model/Location/Exp4/Orignal Location/Walls.csv'
-output_filename = "Topology_4.txt"
+Location_csv_path = 'model/Location/Exp2/Orignal Location/Eng_Location.csv'
+Walls_csv_path = 'model/Location/Exp2/Orignal Location/Walls.csv'
+output_filename = "Topology_2_1.txt"
 
 # 初始化输出文件
 clear_output_file(output_filename)
 
 # Define the active AP
-specified_aps = ["AP4_1", "AP4_2", "AP5_2"]
+specified_aps = ["AP1_1", "AP1_2","AP2_1", "AP2_2","AP5_1", "AP5_2"]
 specified_hosts = ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", 'H10']
 
 # 假设每个AP连接的Host名称的映射
 ap_to_hosts = {
-"AP4_1": ["H3","H5"],
-"AP4_2": ["H1","H7","H8","H9"],
-"AP5_2": ["H2","H4","H6","H10"]
+"AP1_1": ["H1"],
+"AP1_2": ["H2","H4","H9"],
+"AP2_1": ["H6"],
+"AP2_2": ["H3","H5"],
+"AP5_1": ["H10"],
+"AP5_2": ["H8","H7"]
 }
 
 # 从 CSV 文件中读取 Host 和 AP 的数量

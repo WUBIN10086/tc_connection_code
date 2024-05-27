@@ -91,3 +91,58 @@ AP- 9 --:
 AP- 10 --:4 10 2 6 
 fnlThroughputuuuuuuuuuuuuuuuuu=0.000000
 
+
+/a ST42ex3.txt 1 15.0 50 365 90 18 0.9 .5 .1 1000
+Average not Fit
+Average not Fit
+Average not Fit
+Average not Fit
+
+
+Best Found Result
+---------------------------------------------
+15.519565-15.000000
+
+Optimized List of active APs: 
+--------------------------------------
+list ___________________= 1 	 1 	 0
+list ___________________= 2 	 3 	 0
+list ___________________= 3 	 1 	 0
+list ___________________= 7 	 2 	 0
+list ___________________= 8 	 3 	 0
+After optimization
+
+List of Active AP=1
+
+List of Active AP=2
+
+List of Active AP=3
+
+List of Active AP=4
+
+List of Active AP=7
+
+List of Active AP=8
+
+ TTTTTTTTTTTTTfinal..19.146858
+
+AP- 1 --:1 
+
+AP- 2 --:2 4 
+
+AP- 3 --:3 
+
+AP- 4 --:6 5 
+
+AP- 5 --:
+
+AP- 6 --:
+
+AP- 7 --:10 
+
+AP- 8 --:8 7 9 
+
+AP- 9 --:
+
+AP- 10 --:
+fnlThroughputuuuuuuuuuuuuuuuuu=0.000000
