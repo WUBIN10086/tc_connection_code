@@ -1,0 +1,95 @@
+./a ST42ex4.txt 1 5.0 50 365 90 18 0.9 .5 .1 1000
+Average not Fit
+Average not Fit
+
+
+Best Found Result
+---------------------------------------------
+9.374342-5.000000
+
+Optimized List of active APs: 
+--------------------------------------
+list ___________________= 1 	 2 	 0
+list ___________________= 7 	 3 	 0
+list ___________________= 8 	 5 	 0
+After optimization
+
+List of Active AP=1
+
+List of Active AP=2
+
+List of Active AP=7
+
+List of Active AP=8
+
+ TTTTTTTTTTTTTfinal..13.029370
+
+AP- 1 --:2 
+
+AP- 2 --:3 10 4 
+
+AP- 3 --:
+
+AP- 4 --:
+
+AP- 5 --:
+
+AP- 6 --:
+
+AP- 7 --:7 5 
+
+AP- 8 --:6 8 9 1 
+
+AP- 9 --:
+
+AP- 10 --:
+fnlThroughputuuuuuuuuuuuuuuuuu=0.000000
+
+
+./a ST42ex4.txt 1 10.0 50 365 90 18 0.9 .5 .1 1000
+Average not Fit
+Average not Fit
+
+
+Best Found Result
+---------------------------------------------
+60.119883-10.000000
+
+Optimized List of active APs: 
+--------------------------------------
+list ___________________= 3 	 0 	 0
+list ___________________= 7 	 0 	 0
+list ___________________= 8 	 1 	 0
+After optimization
+
+List of Active AP=3
+
+List of Active AP=4
+
+List of Active AP=7
+
+List of Active AP=8
+
+ TTTTTTTTTTTTTfinal..60.119881
+
+AP- 1 --:10 5 9 2 1 4 6 7 3 
+
+AP- 2 --:
+
+AP- 3 --:
+
+AP- 4 --:
+
+AP- 5 --:
+
+AP- 6 --:
+
+AP- 7 --:
+
+AP- 8 --:8 
+
+AP- 9 --:
+
+AP- 10 --:
+fnlThroughputuuuuuuuuuuuuuuuuu=0.000000
+
