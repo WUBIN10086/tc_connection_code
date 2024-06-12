@@ -37,6 +37,9 @@ from throughput_estimation import Distance
 from concurrent_calc import calculate_srf
 from throughput_estimation import Calculate_throughput
 from write_to_output import write_to_file
+from math import log10
+def dBm_to_mW(dBm):
+    return 10 ** (dBm / 10)
 
 #---------------------------------------------------------------------
 
@@ -246,7 +249,8 @@ for i, (host_name, host_x, host_y) in enumerate(host_coordinates):
                 d = Distance(host_x, host_y, ap_x, ap_y)
                 rss = Rss_calculate(parameters['alpha'], parameters['P_1'], d, nk, parameters['Wk'])
                 result = calculate_throughput_estimate(parameters, (host_x, host_y), (ap_x, ap_y), nk)
-                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss}")
+                mW_value = dBm_to_mW(rss)
+                write_to_file(f"{host_name} for {ap_name}: {result}, RSS: {rss},mW:{mW_value}")
                 results[i][j] = result
 
             except ValueError as e:
