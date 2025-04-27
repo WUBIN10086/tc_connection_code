@@ -1,0 +1,5 @@
+Alpha (Least Squares): 2.6323
+Alpha (Average): 2.4899
+Sigmoid a: 62.6191
+Sigmoid b: 71.2667
+Sigmoid c: 7.2200
