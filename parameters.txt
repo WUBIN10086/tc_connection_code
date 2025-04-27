@@ -1,14 +1,14 @@
 # parameters optimized by POT
 # parameters for 2.4Ghz interfaces 1
-alpha = 2.2
+alpha = 2.63
 
 # P_1 is throughput within 1m
-P_1 = -28.9
+P_1 = -25.8
 
 # 7 types wall types(contain 0)
 Wk = 7.21 6.9 3.4 4.7 2.11 2.5
 
 # For throughput estimation
-a = 59.5
-b = 62
-c = 6.78
+a = 62.61
+b = 71.26
+c = 7.22
