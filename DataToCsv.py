@@ -5,10 +5,10 @@ import csv
 folder_path = os.getcwd()
 
 # ？出文件路径
-output_csv = os.path.join(folder_path, "all_thrr.csv")
+output_csv = os.path.join(folder_path, "all_rsss24.csv")
 
 # 文件名列表
-file_list = [f"through{i}.txt" for i in range(1, 25)]
+file_list = [f"rss{i}.txt" for i in range(1, 25)]
 
 all_data = []
 
@@ -20,7 +20,7 @@ for filename in file_list:
                 all_data.append([line])  # ？列形式
 
 # 写入 CSV
-with open("all_thrr.csv", "w", newline='') as f:
+with open("all_rsss24.csv", "w", newline='') as f:
     writer = csv.writer(f)
     writer.writerows(all_data)
 
