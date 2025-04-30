@@ -1,5 +1,6 @@
-Alpha (Least Squares): 2.6323
-Alpha (Average): 2.4899
-Sigmoid a: 62.6191
-Sigmoid b: 71.2667
-Sigmoid c: 7.2200
+P1 (manual)          : -21.9500 dBm
+Alpha (LeastSquares) : 2.6062
+Alpha (Average)      : 2.7236
+Sigmoid a            : 363.3158
+Sigmoid b            : 57.4735
+Sigmoid c            : 6.2347
