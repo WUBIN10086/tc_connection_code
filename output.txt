@@ -1,9 +1,9 @@
-Date and Time: 2025-04-30 22:30
+Date and Time: 2025-05-02 03:02
 ======================
 Devices number
 ----------------------
-Number of Hosts: 1
-Number of APs: 1
+Number of Hosts: 2
+Number of APs: 2
 ----------------------
 Connection number: 1
 ======================
@@ -11,12 +11,17 @@ Deivces Location
 ----------------------
 AP Coordinates:
 ('AP1', 1.5, 8.5)
+('AP2', 1.5, 8.5)
 ----------------------
 Host Coordinates:
-('H1', 1.5, 13.5)
+('H1', 1.5, 11.5)
+('H2', 1.5, 11.5)
 ======================
 Single Throughput
 ----------------------
-H1 for AP1: 352.21, RSS: -40.9727051149045
+H1 for AP1: 338.77, RSS: -35.16190983212213
+H1 for AP2: 342.5, RSS: -36.897228342444485
+H2 for AP1: 338.77, RSS: -35.16190983212213
+H2 for AP2: 342.5, RSS: -36.897228342444485
 Code executed in 0.00 seconds
 ======================
